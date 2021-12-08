@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'abstract/button.dart';
+import 'abstract/todo_item.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +16,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       home: const TodoList(),
       title: 'Simple Todo',
-      theme: ThemeData(textTheme: const TextTheme()),
+      theme: ThemeData(
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+              backgroundColor: HexColor('#224064')),
+          textTheme: const TextTheme(
+              bodyText2: TextStyle(color: Colors.white),
+              bodyText1: TextStyle(color: Colors.white, fontSize: 20))),
     );
   }
 }
@@ -48,6 +55,12 @@ class _TodoListState extends State<TodoList> {
     intialTodo();
   }
 
+  intialTodo() async {
+    List<String> tododata = await getBackData('todo');
+    List<String> donedata = await getBackData('done');
+    setState(() => {_todoTask = tododata, _doneTask = donedata});
+  }
+
   saveData(String dataBaseName, List<String> dataItemList) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setStringList(dataBaseName, dataItemList);
@@ -57,12 +70,6 @@ class _TodoListState extends State<TodoList> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var data = prefs.getStringList(_dataBaseName);
     return data ?? [];
-  }
-
-  intialTodo() async {
-    List<String> tododata = await getBackData('todo');
-    List<String> donedata = await getBackData('done');
-    setState(() => {_todoTask = tododata, _doneTask = donedata});
   }
 
   addTask() async {
@@ -90,13 +97,14 @@ class _TodoListState extends State<TodoList> {
     saveData('done', _doneData);
   }
 
-  deleteTask(int index) async {
-    List<String> data = await getBackData('done');
+  deleteTask(int index, String databasename) async {
+    List<String> data = await getBackData(databasename);
     data.removeAt(index);
     setState(() {
-      _doneTask = data;
+      if (databasename == 'todo') _todoTask = data;
+      if (databasename == 'done') _doneTask = data;
     });
-    saveData('done', data);
+    saveData(databasename, data);
   }
 
   void changePage(int index) {
@@ -109,9 +117,9 @@ class _TodoListState extends State<TodoList> {
   Future openDialog() => showDialog(
       context: context,
       builder: (context) => AlertDialog(
-            title: const Text(
+            title: Text(
               'Todo task',
-              style: TextStyle(color: Colors.white, fontSize: 22.5),
+              style: Theme.of(context).textTheme.bodyText1,
             ),
             backgroundColor: HexColor('#224064'),
             content: TextField(
@@ -132,41 +140,45 @@ class _TodoListState extends State<TodoList> {
                   ))
             ],
           ));
+
   Widget onDonePage() {
     if (_selectedIndex != 1) return Container();
-    return IconButton(
-        onPressed: () => showDialog(
-            context: context,
-            builder: (BuildContext context) => AlertDialog(
-                  backgroundColor: Colors.red[900],
-                  title: const Text(
-                    'Delete Forever',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  actions: [
-                    TextButton(
-                        onPressed: () {
-                          List<String> cleanDone = [];
-                          saveData('done', cleanDone);
-                          setState(() {
-                            _doneTask = cleanDone;
-                          });
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Sure',
-                            style: TextStyle(color: Colors.white))),
-                    TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Nah',
-                            style: TextStyle(color: Colors.white)))
-                  ],
-                )),
-        icon: const Icon(
-          Icons.delete_forever,
-          size: 40,
-        ));
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 13.5, vertical: 0),
+      child: IconButton(
+          onPressed: () => showDialog(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                    backgroundColor: Colors.red[900],
+                    title: Text(
+                      'Delete Forever',
+                      style: Theme.of(context).textTheme.bodyText1,
+                    ),
+                    actions: [
+                      TextButton(
+                          onPressed: () {
+                            List<String> cleanDone = [];
+                            saveData('done', cleanDone);
+                            setState(() {
+                              _doneTask = cleanDone;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Sure',
+                              style: TextStyle(color: Colors.white))),
+                      TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Nah',
+                              style: TextStyle(color: Colors.white)))
+                    ],
+                  )),
+          icon: const Icon(
+            Icons.delete_forever,
+            size: 40,
+          )),
+    );
   }
 
   Widget onTodoPage() {
@@ -193,7 +205,9 @@ class _TodoListState extends State<TodoList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: [onDonePage()],
+        actions: [
+          onDonePage(),
+        ],
         centerTitle: true,
         title: const Text('Todo List'),
         backgroundColor: HexColor('#224064'),
@@ -201,7 +215,6 @@ class _TodoListState extends State<TodoList> {
       bottomNavigationBar: BottomNavigationBar(
         unselectedItemColor: Colors.white30,
         selectedItemColor: HexColor('#008282'),
-        backgroundColor: HexColor('#224064'),
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.format_list_bulleted), label: 'Todo'),
@@ -214,49 +227,33 @@ class _TodoListState extends State<TodoList> {
       floatingActionButton: onTodoPage(),
       backgroundColor: HexColor("#112139"),
       body: PageView(
+        onPageChanged: (index) => setState(() {
+          _selectedIndex = index;
+        }),
         controller: _controller,
         children: [
           ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               itemCount: _todoTask.length,
               itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                        border: Border.all(width: 1),
-                        borderRadius: BorderRadius.circular(7.5),
-                        color: HexColor('#096380')),
-                    child: ListTile(
-                      dense: true,
-                      title: Text(
-                        _todoTask[index],
-                        style: TextStyle(color: _baseTextColor, fontSize: 20),
-                      ),
-                      trailing: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          IconButton(
-                            padding: EdgeInsets.all(4),
-                            constraints: BoxConstraints(),
-                            onPressed: () => completeTask(index),
-                            icon: const Icon(
-                              Icons.done,
-                              color: Colors.white,
-                            ),
-                          ),
-                          IconButton(
-                            padding: EdgeInsets.all(4),
-                            constraints: BoxConstraints(),
-                            onPressed: () => deleteTask(index),
-                            icon: const Icon(
-                              Icons.delete_outline_outlined,
-                              color: Colors.white,
-                            ),
-                          )
-                        ],
-                      ),
+                return TodoItem(
+                  opacity: 1.0,
+                  child: ListTile(
+                    dense: true,
+                    title: Text(
+                      _todoTask[index],
+                      style: TextStyle(color: _baseTextColor, fontSize: 20),
+                    ),
+                    trailing: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        CustomButton(
+                            callback: () => completeTask(index),
+                            iconData: Icons.done),
+                        CustomButton(
+                            callback: () => deleteTask(index, 'todo'),
+                            iconData: Icons.delete_outline),
+                      ],
                     ),
                   ),
                 );
@@ -265,37 +262,21 @@ class _TodoListState extends State<TodoList> {
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               itemCount: _doneTask.length,
               itemBuilder: (context, index) {
-                return Opacity(
-                  opacity: 0.5,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                          border: Border.all(width: 1),
-                          borderRadius: BorderRadius.circular(7.5),
-                          color: HexColor('#096380')),
-                      child: ListTile(
-                        dense: true,
-                        title: Text(
-                          _doneTask[index],
-                          style: TextStyle(
-                              decoration: TextDecoration.lineThrough,
-                              color: _baseTextColor,
-                              fontSize: 20),
-                        ),
-                        trailing: IconButton(
-                          padding: EdgeInsets.all(4),
-                          constraints: BoxConstraints(),
-                          onPressed: () => deleteTask(index),
-                          icon: const Icon(
-                            Icons.delete_outline_outlined,
-                            color: Colors.white,
-                          ),
-                        ),
+                return TodoItem(
+                  opacity: 0.65,
+                  child: ListTile(
+                      dense: true,
+                      title: Text(
+                        _doneTask[index],
+                        style: TextStyle(
+                            decoration: TextDecoration.lineThrough,
+                            color: _baseTextColor,
+                            fontSize: 20),
                       ),
-                    ),
-                  ),
+                      trailing: CustomButton(
+                        callback: () => deleteTask(index, 'done'),
+                        iconData: Icons.delete_outline,
+                      )),
                 );
               }),
         ],
