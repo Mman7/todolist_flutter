@@ -79,6 +79,7 @@ class _TodoListState extends State<TodoList> {
     });
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setStringList('todo', _todoTask);
+    showSnackBar('Successfully Added');
   }
 
   completeTask(int index) async {
@@ -95,6 +96,7 @@ class _TodoListState extends State<TodoList> {
 
     saveData('todo', _todoData);
     saveData('done', _doneData);
+    showSnackBar('Successfully Completed');
   }
 
   deleteTask(int index, String databasename) async {
@@ -105,9 +107,27 @@ class _TodoListState extends State<TodoList> {
       if (databasename == 'done') _doneTask = data;
     });
     saveData(databasename, data);
+    showSnackBar('Successfully Deleted');
   }
 
-  void changePage(int index) {
+  returnTask(int index) async {
+    List<String> _todoData = await getBackData('todo');
+    List<String> _doneData = await getBackData('done');
+
+    _todoData.add(_doneData[index]);
+    _doneData.removeAt(index);
+
+    setState(() {
+      _doneTask = _doneData;
+      _todoTask = _todoData;
+    });
+
+    saveData('todo', _todoData);
+    saveData('done', _doneData);
+    showSnackBar('Successfully Returned');
+  }
+
+  changePage(int index) {
     setState(() {
       _selectedIndex = index;
       _controller.jumpToPage(index);
@@ -149,28 +169,36 @@ class _TodoListState extends State<TodoList> {
           onPressed: () => showDialog(
               context: context,
               builder: (BuildContext context) => AlertDialog(
-                    backgroundColor: Colors.red[900],
+                    backgroundColor: HexColor('#224064'),
                     title: Text(
-                      'Delete Forever',
+                      'Are you sure delete forever?',
                       style: Theme.of(context).textTheme.bodyText1,
                     ),
                     actions: [
                       TextButton(
+                          style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all(
+                                  HexColor('#008282'))),
                           onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('No',
+                              style: TextStyle(color: Colors.white))),
+                      TextButton(
+                          style: ButtonStyle(
+                              backgroundColor:
+                                  MaterialStateProperty.all(Colors.redAccent)),
+                          onPressed: () {
+                            //Clean done task
                             List<String> cleanDone = [];
                             saveData('done', cleanDone);
                             setState(() {
                               _doneTask = cleanDone;
                             });
+                            showSnackBar('Successfully Clean Done Task');
                             Navigator.of(context).pop();
                           },
                           child: const Text('Sure',
-                              style: TextStyle(color: Colors.white))),
-                      TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Nah',
                               style: TextStyle(color: Colors.white)))
                     ],
                   )),
@@ -199,6 +227,13 @@ class _TodoListState extends State<TodoList> {
         Icons.add,
       ),
     );
+  }
+
+  showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: HexColor('#008282'),
+        duration: const Duration(milliseconds: 1000),
+        content: Text(message)));
   }
 
   @override
@@ -273,10 +308,16 @@ class _TodoListState extends State<TodoList> {
                             color: _baseTextColor,
                             fontSize: 20),
                       ),
-                      trailing: CustomButton(
-                        callback: () => deleteTask(index, 'done'),
-                        iconData: Icons.delete_outline,
-                      )),
+                      trailing: Wrap(children: [
+                        CustomButton(
+                          callback: () => returnTask(index),
+                          iconData: Icons.done,
+                        ),
+                        CustomButton(
+                          callback: () => deleteTask(index, 'done'),
+                          iconData: Icons.delete_outline,
+                        ),
+                      ])),
                 );
               }),
         ],
