@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'abstract/button.dart';
+import 'abstract/custom_pop_up_inside_layout.dart';
+import 'abstract/custom_button.dart';
 import 'abstract/todo_item.dart';
 
 void main() {
@@ -17,6 +18,10 @@ class MyApp extends StatelessWidget {
       home: const TodoList(),
       title: 'Simple Todo',
       theme: ThemeData(
+          popupMenuTheme: const PopupMenuThemeData(
+              color: Colors.black87,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(5)))),
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
               backgroundColor: HexColor('#224064')),
           textTheme: const TextTheme(
@@ -134,32 +139,54 @@ class _TodoListState extends State<TodoList> {
     });
   }
 
-  Future openDialog() => showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-            title: Text(
-              'Todo task',
-              style: Theme.of(context).textTheme.bodyText1,
-            ),
-            backgroundColor: HexColor('#224064'),
-            content: TextField(
-              style: const TextStyle(color: Colors.white),
-              autofocus: true,
-              controller: _textFieldController,
-            ),
-            actions: [
-              TextButton(
-                  style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all(HexColor('#008282'))),
-                  onPressed: () =>
-                      Navigator.of(context).pop(_textFieldController.text),
-                  child: const Text(
-                    'Add',
-                    style: TextStyle(color: Colors.white),
-                  ))
-            ],
-          ));
+  editTask(int index) async {
+    final editvalue = _todoTask[index];
+    _textFieldController.text = editvalue;
+    final text = await openDialog('Edit Task', 'Edit');
+    if (text == null) return;
+    setState(() {
+      _todoTask[index] = text;
+    });
+    saveData('todo', _todoTask);
+    _textFieldController.text = '';
+  }
+
+  openDialog(String _title, String _buttonText) {
+    return showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: Text(
+                _title,
+                style: Theme.of(context).textTheme.bodyText1,
+              ),
+              backgroundColor: HexColor('#AD6B00'),
+              content: TextField(
+                style: const TextStyle(color: Colors.white),
+                autofocus: true,
+                controller: _textFieldController,
+              ),
+              actions: [
+                TextButton(
+                    style: ButtonStyle(
+                        backgroundColor:
+                            MaterialStateProperty.all(HexColor('#008282'))),
+                    onPressed: () =>
+                        Navigator.of(context).pop(_textFieldController.text),
+                    child: Text(
+                      _buttonText,
+                      style: TextStyle(color: Colors.white),
+                    ))
+              ],
+            ));
+  }
+
+  cleanDoneTask() {
+    List<String> cleanDone = [];
+    saveData('done', cleanDone);
+    setState(() {
+      _doneTask = cleanDone;
+    });
+  }
 
   Widget onDonePage() {
     if (_selectedIndex != 1) return Container();
@@ -189,12 +216,7 @@ class _TodoListState extends State<TodoList> {
                               backgroundColor:
                                   MaterialStateProperty.all(Colors.redAccent)),
                           onPressed: () {
-                            //Clean done task
-                            List<String> cleanDone = [];
-                            saveData('done', cleanDone);
-                            setState(() {
-                              _doneTask = cleanDone;
-                            });
+                            cleanDoneTask();
                             showSnackBar('Successfully Clean Done Task');
                             Navigator.of(context).pop();
                           },
@@ -213,7 +235,8 @@ class _TodoListState extends State<TodoList> {
     if (_selectedIndex != 0) return Container();
     return FloatingActionButton(
       onPressed: () async {
-        String? value = await openDialog();
+        _textFieldController.text = '';
+        String? value = await openDialog('Todo Task', 'Add');
         if (value == null) return;
         setState(() {
           _inputText = value;
@@ -283,11 +306,34 @@ class _TodoListState extends State<TodoList> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         CustomButton(
-                            callback: () => completeTask(index),
-                            iconData: Icons.done),
-                        CustomButton(
-                            callback: () => deleteTask(index, 'todo'),
-                            iconData: Icons.delete_outline),
+                          callback: () => completeTask(index),
+                          iconData: Icons.done,
+                        ),
+                        PopupMenuButton(
+                            icon: const Icon(
+                              Icons.more_vert,
+                              color: Colors.white,
+                            ),
+                            itemBuilder: (BuildContext context) => [
+                                  PopupMenuItem(
+
+                                      /// Solution of this
+                                      /// https://stackoverflow.com/questions/69939559/showdialog-bug-dialog-isnt-triggered-from-popupmenubutton-in-flutter
+                                      onTap: () {
+                                        Future.delayed(
+                                            const Duration(seconds: 0),
+                                            () => editTask(index));
+                                      },
+                                      child: CustomPopUpInside(
+                                        text: 'Edit',
+                                        iconData: Icons.edit,
+                                      )),
+                                  PopupMenuItem(
+                                      onTap: () => deleteTask(index, 'todo'),
+                                      child: CustomPopUpInside(
+                                          text: 'Delete',
+                                          iconData: Icons.delete))
+                                ])
                       ],
                     ),
                   ),
@@ -311,9 +357,10 @@ class _TodoListState extends State<TodoList> {
                       trailing: Wrap(children: [
                         CustomButton(
                           callback: () => returnTask(index),
-                          iconData: Icons.done,
+                          iconData: Icons.subdirectory_arrow_left,
                         ),
                         CustomButton(
+                          // callback: () => deleteTask(index, 'done'),
                           callback: () => deleteTask(index, 'done'),
                           iconData: Icons.delete_outline,
                         ),
