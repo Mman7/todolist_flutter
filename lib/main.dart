@@ -91,7 +91,7 @@ class _TodoListState extends State<TodoList> {
     List<String> _todoData = await getBackData('todo');
     List<String> _doneData = await getBackData('done');
 
-    _doneData.add(_todoData[index]);
+    _doneData.insert(0, _todoData[index]);
     _todoData.removeAt(index);
 
     setState(() {
@@ -149,6 +149,7 @@ class _TodoListState extends State<TodoList> {
     });
     saveData('todo', _todoTask);
     _textFieldController.text = '';
+    showSnackBar('Successfully Edited');
   }
 
   openDialog(String _title, String _buttonText) {
@@ -159,7 +160,7 @@ class _TodoListState extends State<TodoList> {
                 _title,
                 style: Theme.of(context).textTheme.bodyText1,
               ),
-              backgroundColor: HexColor('#AD6B00'),
+              backgroundColor: HexColor('#224064'),
               content: TextField(
                 style: const TextStyle(color: Colors.white),
                 autofocus: true,
@@ -174,7 +175,7 @@ class _TodoListState extends State<TodoList> {
                         Navigator.of(context).pop(_textFieldController.text),
                     child: Text(
                       _buttonText,
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ))
               ],
             ));
