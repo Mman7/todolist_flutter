@@ -1,4 +1,5 @@
 
+
 # simple_todo
 
 this project is a simple todo list that i make for myself
@@ -9,6 +10,6 @@ this project is a simple todo list that i make for myself
 
 ## App pic
 
-![App pic](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1639904310.png)
+![App pic](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1639904310_25.png)
 
-![App pic 2](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1639904332.png)
+![App pic 2](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1639904332_25.png)
