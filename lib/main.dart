@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
       home: const TodoList(),
       title: 'Simple Todo',
       theme: ThemeData(
+          canvasColor: HexColor('#ffffff').withOpacity(0.35),
           popupMenuTheme: const PopupMenuThemeData(
               color: Colors.black87,
               shape: RoundedRectangleBorder(
@@ -38,7 +40,7 @@ class TodoList extends StatefulWidget {
   _TodoListState createState() => _TodoListState();
 }
 
-class _TodoListState extends State<TodoList> {
+class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
   final Color _baseTextColor = Colors.white;
   final PageController _controller = PageController();
   List<String> _doneTask = [];
@@ -260,6 +262,16 @@ class _TodoListState extends State<TodoList> {
         content: Text(message)));
   }
 
+  reOrderItem(oldindex, newIndex) {
+    // print(_todoTask);
+    final String changeItem = _todoTask[oldindex];
+    setState(() {
+      _todoTask.removeAt(oldindex);
+      _todoTask.insert(newIndex, changeItem);
+    });
+    saveData('todo', _todoTask);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -291,11 +303,15 @@ class _TodoListState extends State<TodoList> {
         }),
         controller: _controller,
         children: [
-          ListView.builder(
+          ReorderableListView.builder(
+              onReorder: (oldIndex, newIndex) {
+                reOrderItem(oldIndex, newIndex);
+              },
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               itemCount: _todoTask.length,
               itemBuilder: (context, index) {
                 return TodoItem(
+                  key: ValueKey(index),
                   opacity: 1.0,
                   child: ListTile(
                     dense: true,
