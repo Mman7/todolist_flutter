@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hexcolor/hexcolor.dart';
 
 class TodoItem extends StatefulWidget {
   const TodoItem({
@@ -29,7 +28,7 @@ class _TodoItemState extends State<TodoItem> {
                     color: Colors.grey.withOpacity(0.6),
                     spreadRadius: 6,
                     blurRadius: 10,
-                    offset: Offset(0, 5))
+                    offset: const Offset(0, 5))
               ],
               borderRadius: BorderRadius.circular(7.5),
               color: Theme.of(context).colorScheme.primary),
