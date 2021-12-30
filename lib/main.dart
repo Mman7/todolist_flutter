@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'abstract/custom_pop_up_inside_layout.dart';
-import 'abstract/custom_button.dart';
-import 'abstract/todo_item.dart';
+import 'abstract/widget/custom_pop_up_inside_layout.dart';
+import 'abstract/widget/custom_button.dart';
+import 'abstract/widget/todo_item.dart';
+import 'abstract/todo_controller.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,16 +18,28 @@ class MyApp extends StatelessWidget {
       home: const TodoList(),
       title: 'Simple Todo',
       theme: ThemeData(
+          textButtonTheme: TextButtonThemeData(
+              style: ButtonStyle(
+                  foregroundColor: MaterialStateProperty.all(
+                      Theme.of(context).bottomAppBarColor),
+                  backgroundColor: MaterialStateProperty.all(
+                      Theme.of(context).primaryColor))),
+          primaryColor: HexColor('#39A0FF'),
+          backgroundColor: HexColor('#E5EEF5'),
           canvasColor: HexColor('#ffffff').withOpacity(0.35),
-          popupMenuTheme: const PopupMenuThemeData(
-              color: Colors.black87,
+          dialogTheme: DialogTheme(
+              backgroundColor: Theme.of(context).bottomAppBarColor,
+              titleTextStyle: TextStyle(color: Theme.of(context).primaryColor)),
+          popupMenuTheme: PopupMenuThemeData(
+              color: Theme.of(context).bottomAppBarColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(5)))),
-          bottomNavigationBarTheme: BottomNavigationBarThemeData(
-              backgroundColor: HexColor('#224064')),
-          textTheme: const TextTheme(
-              bodyText2: TextStyle(color: Colors.white),
-              bodyText1: TextStyle(color: Colors.white, fontSize: 20))),
+          appBarTheme: AppBarTheme(color: Colors.white),
+          bottomNavigationBarTheme:
+              BottomNavigationBarThemeData(backgroundColor: Colors.white),
+          textTheme: TextTheme(
+            bodyText1: TextStyle(color: Colors.white, fontSize: 20),
+          )),
     );
   }
 }
@@ -40,7 +52,6 @@ class TodoList extends StatefulWidget {
 }
 
 class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
-  final Color _baseTextColor = Colors.white;
   final PageController _controller = PageController();
   List<String> _doneTask = [];
   String? _inputText;
@@ -62,75 +73,11 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
   }
 
   intialTodo() async {
-    List<String> tododata = await getBackData('todo');
-    List<String> donedata = await getBackData('done');
+    List<String> tododata =
+        await TodoController().getData(dataBaseName: 'todo');
+    List<String> donedata =
+        await TodoController().getData(dataBaseName: 'done');
     setState(() => {_todoTask = tododata, _doneTask = donedata});
-  }
-
-  saveData(String dataBaseName, List<String> dataItemList) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList(dataBaseName, dataItemList);
-  }
-
-  Future<List<String>> getBackData(String _dataBaseName) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var data = prefs.getStringList(_dataBaseName);
-    return data ?? [];
-  }
-
-  addTask() async {
-    if (_inputText == null) return;
-    setState(() {
-      _todoTask.add(_inputText.toString());
-    });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('todo', _todoTask);
-    showSnackBar('Successfully Added');
-  }
-
-  completeTask(int index) async {
-    List<String> _todoData = await getBackData('todo');
-    List<String> _doneData = await getBackData('done');
-
-    _doneData.insert(0, _todoData[index]);
-    _todoData.removeAt(index);
-
-    setState(() {
-      _doneTask = _doneData;
-      _todoTask = _todoData;
-    });
-
-    saveData('todo', _todoData);
-    saveData('done', _doneData);
-    showSnackBar('Successfully Completed');
-  }
-
-  deleteTask(int index, String databasename) async {
-    List<String> data = await getBackData(databasename);
-    data.removeAt(index);
-    setState(() {
-      if (databasename == 'todo') _todoTask = data;
-      if (databasename == 'done') _doneTask = data;
-    });
-    saveData(databasename, data);
-    showSnackBar('Successfully Deleted');
-  }
-
-  returnTask(int index) async {
-    List<String> _todoData = await getBackData('todo');
-    List<String> _doneData = await getBackData('done');
-
-    _todoData.add(_doneData[index]);
-    _doneData.removeAt(index);
-
-    setState(() {
-      _doneTask = _doneData;
-      _todoTask = _todoData;
-    });
-
-    saveData('todo', _todoData);
-    saveData('done', _doneData);
-    showSnackBar('Successfully Returned');
   }
 
   changePage(int index) {
@@ -141,16 +88,16 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
   }
 
   editTask(int index) async {
-    final editvalue = _todoTask[index];
-    _textFieldController.text = editvalue;
+    _textFieldController.text = _todoTask[index];
     final text = await openDialog('Edit Task', 'Edit');
     if (text == null) return;
     setState(() {
       _todoTask[index] = text;
     });
-    saveData('todo', _todoTask);
     _textFieldController.text = '';
-    showSnackBar('Successfully Edited');
+    TodoController().saveData('todo', _todoTask);
+    TodoController()
+        .showSnackBar(context: context, message: 'Successfully Edited');
   }
 
   openDialog(String _title, String _buttonText) {
@@ -159,35 +106,24 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
         builder: (context) => AlertDialog(
               title: Text(
                 _title,
-                style: Theme.of(context).textTheme.bodyText1,
+                style: TextStyle(
+                    fontWeight:
+                        Theme.of(context).textTheme.bodyLarge?.fontWeight,
+                    fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize),
               ),
-              backgroundColor: HexColor('#224064'),
               content: TextField(
-                style: const TextStyle(color: Colors.white),
                 autofocus: true,
                 controller: _textFieldController,
               ),
               actions: [
                 TextButton(
-                    style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all(HexColor('#008282'))),
                     onPressed: () =>
                         Navigator.of(context).pop(_textFieldController.text),
                     child: Text(
                       _buttonText,
-                      style: const TextStyle(color: Colors.white),
                     ))
               ],
             ));
-  }
-
-  cleanDoneTask() {
-    List<String> cleanDone = [];
-    saveData('done', cleanDone);
-    setState(() {
-      _doneTask = cleanDone;
-    });
   }
 
   Widget onDonePage() {
@@ -195,41 +131,51 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 13.5, vertical: 0),
       child: IconButton(
-          onPressed: () => showDialog(
-              context: context,
-              builder: (BuildContext context) => AlertDialog(
-                    backgroundColor: HexColor('#224064'),
-                    title: Text(
-                      'Are you sure delete forever?',
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                    actions: [
-                      TextButton(
-                          style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all(
-                                  HexColor('#008282'))),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('No',
-                              style: TextStyle(color: Colors.white))),
-                      TextButton(
-                          style: ButtonStyle(
-                              backgroundColor:
-                                  MaterialStateProperty.all(Colors.redAccent)),
-                          onPressed: () {
-                            cleanDoneTask();
-                            showSnackBar('Successfully Clean Done Task');
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Sure',
-                              style: TextStyle(color: Colors.white)))
-                    ],
-                  )),
-          icon: const Icon(
-            Icons.delete_forever,
-            size: 40,
-          )),
+        icon: Icon(Icons.delete_forever,
+            size: 40, color: Theme.of(context).primaryColor),
+        onPressed: () => showDialog(
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+                  backgroundColor: Theme.of(context).bottomAppBarColor,
+                  title: Text(
+                    'Are you sure delete forever?',
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontWeight:
+                            Theme.of(context).textTheme.bodyLarge?.fontWeight,
+                        fontSize:
+                            Theme.of(context).textTheme.bodyLarge?.fontSize),
+                  ),
+                  actions: [
+                    TextButton(
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all(
+                                Theme.of(context).primaryColor)),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('No',
+                            style: TextStyle(color: Colors.white))),
+                    TextButton(
+                        style: ButtonStyle(
+                            backgroundColor:
+                                MaterialStateProperty.all(Colors.redAccent)),
+                        onPressed: () {
+                          TodoController()
+                              .cleanDoneTask(
+                                  doneList: _doneTask, context: context)
+                              .then((newList) =>
+                                  setState(() => _doneTask = newList));
+                          TodoController().showSnackBar(
+                              context: context,
+                              message: 'Successfully Clean Done Task');
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Sure',
+                            style: TextStyle(color: Colors.white)))
+                  ],
+                )),
+      ),
     );
   }
 
@@ -243,32 +189,17 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
         setState(() {
           _inputText = value;
         });
-        addTask();
+        TodoController()
+            .addTask(todoList: _todoTask, value: _inputText)
+            .then((newTodoList) => setState(() => _todoTask = newTodoList));
         _textFieldController.text = '';
       },
-      backgroundColor: HexColor('#008282'),
-      foregroundColor: Colors.white,
+      backgroundColor: Theme.of(context).primaryColor,
+      foregroundColor: Theme.of(context).bottomAppBarColor,
       child: const Icon(
         Icons.add,
       ),
     );
-  }
-
-  showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        backgroundColor: HexColor('#008282'),
-        duration: const Duration(milliseconds: 1000),
-        content: Text(message)));
-  }
-
-  reOrderItem(oldindex, newIndex) {
-    // print(_todoTask);
-    final String changeItem = _todoTask[oldindex];
-    setState(() {
-      _todoTask.removeAt(oldindex);
-      _todoTask.insert(newIndex, changeItem);
-    });
-    saveData('todo', _todoTask);
   }
 
   @override
@@ -279,12 +210,14 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
           onDonePage(),
         ],
         centerTitle: true,
-        title: const Text('Todo List'),
-        backgroundColor: HexColor('#224064'),
+        title: Text(
+          'Todo List',
+          style: TextStyle(color: Theme.of(context).primaryColor),
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        unselectedItemColor: Colors.white30,
-        selectedItemColor: HexColor('#008282'),
+        unselectedItemColor: Colors.black38,
+        selectedItemColor: Theme.of(context).primaryColor,
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.format_list_bulleted), label: 'Todo'),
@@ -295,7 +228,7 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: onTodoPage(),
-      backgroundColor: HexColor("#112139"),
+      backgroundColor: Theme.of(context).backgroundColor,
       body: PageView(
         onPageChanged: (index) => setState(() {
           _selectedIndex = index;
@@ -303,9 +236,12 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
         controller: _controller,
         children: [
           ReorderableListView.builder(
-              onReorder: (oldIndex, newIndex) {
-                reOrderItem(oldIndex, newIndex);
-              },
+              onReorder: (oldIndex, newIndex) async => await TodoController()
+                  .reOrderItem(
+                      oldIndex: oldIndex,
+                      newIndex: newIndex,
+                      todoList: _todoTask)
+                  .then((newList) => setState(() => _todoTask = newList)),
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               itemCount: _todoTask.length,
               itemBuilder: (context, index) {
@@ -316,13 +252,26 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
                     dense: true,
                     title: Text(
                       _todoTask[index],
-                      style: TextStyle(color: _baseTextColor, fontSize: 20),
+                      style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyText1?.color,
+                          fontSize:
+                              Theme.of(context).textTheme.bodyText1?.fontSize),
                     ),
                     trailing: Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         CustomButton(
-                          callback: () => completeTask(index),
+                          callback: () async => {
+                            TodoController()
+                                .completeTask(
+                                  context: context,
+                                  completedIndex: index,
+                                  doneList: _doneTask,
+                                  todoList: _todoTask,
+                                )
+                                .then((value) =>
+                                    setState(() => _todoTask = value))
+                          },
                           iconData: Icons.done,
                         ),
                         PopupMenuButton(
@@ -345,7 +294,18 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
                                         iconData: Icons.edit,
                                       )),
                                   PopupMenuItem(
-                                      onTap: () => deleteTask(index, 'todo'),
+                                      textStyle: TextStyle(
+                                          color:
+                                              Theme.of(context).primaryColor),
+                                      onTap: () {
+                                        TodoController().deleteTask(
+                                          databasename: 'todo',
+                                          list: _todoTask,
+                                          removeIndex: index,
+                                          context: context,
+                                        );
+                                        setState(() {});
+                                      },
                                       child: CustomPopUpInside(
                                           text: 'Delete',
                                           iconData: Icons.delete))
@@ -360,24 +320,38 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
               itemCount: _doneTask.length,
               itemBuilder: (context, index) {
                 return TodoItem(
-                  opacity: 0.65,
+                  opacity: 0.5,
                   child: ListTile(
                       dense: true,
                       title: Text(
                         _doneTask[index],
                         style: TextStyle(
                             decoration: TextDecoration.lineThrough,
-                            color: _baseTextColor,
-                            fontSize: 20),
+                            color: Theme.of(context).textTheme.bodyText1?.color,
+                            fontSize: Theme.of(context)
+                                .textTheme
+                                .bodyText1
+                                ?.fontSize),
                       ),
                       trailing: Wrap(children: [
                         CustomButton(
-                          callback: () => returnTask(index),
+                          callback: () async => await TodoController()
+                              .returnTask(
+                                context: context,
+                                todoList: _todoTask,
+                                doneList: _doneTask,
+                                returnItemIndex: index,
+                              )
+                              .then(
+                                  (value) => setState(() => _doneTask = value)),
                           iconData: Icons.subdirectory_arrow_left,
                         ),
                         CustomButton(
-                          // callback: () => deleteTask(index, 'done'),
-                          callback: () => deleteTask(index, 'done'),
+                          callback: () => TodoController().deleteTask(
+                              list: _doneTask,
+                              removeIndex: index,
+                              databasename: 'done',
+                              context: context),
                           iconData: Icons.delete_outline,
                         ),
                       ])),
