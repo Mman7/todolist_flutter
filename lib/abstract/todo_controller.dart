@@ -93,13 +93,6 @@ class TodoController {
     return todoList;
   }
 
-  editTask(
-      {required List<String> todoList,
-      required int index,
-      required BuildContext context}) {
-    var item = showSnackBar(context: context, message: 'Successfully Edited');
-  }
-
   openDialog(String _title, String _buttonText, context, controller) {
     return showDialog(
         context: context,
