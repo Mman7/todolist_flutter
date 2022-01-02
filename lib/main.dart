@@ -5,6 +5,8 @@ import 'abstract/widget/custom_button.dart';
 import 'abstract/widget/todo_item.dart';
 import 'abstract/todo_controller.dart';
 
+//TODo Theme problem
+// ? how to change thememode via something
 void main() {
   runApp(const MyApp());
 }
@@ -15,8 +17,27 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: const TodoList(),
+      home: TodoList(),
       title: 'Simple Todo',
+      darkTheme: ThemeData(
+          dialogTheme: DialogTheme(
+              contentTextStyle: TextStyle(color: Colors.white),
+              backgroundColor: Colors.black.withAlpha(1000),
+              titleTextStyle:
+                  TextStyle(color: Theme.of(context).colorScheme.secondary)),
+          popupMenuTheme: PopupMenuThemeData(
+            color: Colors.black.withAlpha(1000),
+          ),
+          appBarTheme: const AppBarTheme(backgroundColor: Colors.black38),
+          textTheme: const TextTheme(
+            bodyText1: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          primaryColor: Colors.blue,
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+              backgroundColor: Colors.black38,
+              selectedItemColor: Colors.blue,
+              unselectedItemColor: Colors.grey.withOpacity(0.5)),
+          backgroundColor: Colors.white.withOpacity(0.1)),
       theme: ThemeData(
           textButtonTheme: TextButtonThemeData(
               style: ButtonStyle(
@@ -32,12 +53,14 @@ class MyApp extends StatelessWidget {
               titleTextStyle: TextStyle(color: Theme.of(context).primaryColor)),
           popupMenuTheme: PopupMenuThemeData(
               color: Theme.of(context).bottomAppBarColor,
-              shape: RoundedRectangleBorder(
+              shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(5)))),
-          appBarTheme: AppBarTheme(color: Colors.white),
+          appBarTheme: AppBarTheme(
+              foregroundColor: Colors.white,
+              backgroundColor: Theme.of(context).primaryColor),
           bottomNavigationBarTheme:
-              BottomNavigationBarThemeData(backgroundColor: Colors.white),
-          textTheme: TextTheme(
+              const BottomNavigationBarThemeData(backgroundColor: Colors.white),
+          textTheme: const TextTheme(
             bodyText1: TextStyle(color: Colors.white, fontSize: 20),
           )),
     );
@@ -45,13 +68,14 @@ class MyApp extends StatelessWidget {
 }
 
 class TodoList extends StatefulWidget {
-  const TodoList({Key? key}) : super(key: key);
-
+  TodoList({
+    Key? key,
+  }) : super(key: key);
   @override
   _TodoListState createState() => _TodoListState();
 }
 
-class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
+class _TodoListState extends State<TodoList> {
   final PageController _controller = PageController();
   List<String> _doneTask = [];
   String? _inputText;
@@ -113,6 +137,11 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
               ),
               content: TextField(
                 autofocus: true,
+                style: TextStyle(
+                    color: MediaQuery.of(context).platformBrightness ==
+                            Brightness.dark
+                        ? Colors.white
+                        : Colors.black),
                 controller: _textFieldController,
               ),
               actions: [
@@ -132,7 +161,7 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 13.5, vertical: 0),
       child: IconButton(
         icon: Icon(Icons.delete_forever,
-            size: 40, color: Theme.of(context).primaryColor),
+            size: 40, color: Theme.of(context).secondaryHeaderColor),
         onPressed: () => showDialog(
             context: context,
             builder: (BuildContext context) => AlertDialog(
@@ -204,20 +233,26 @@ class _TodoListState extends State<TodoList> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final Icon themeIcon =
+        MediaQuery.of(context).platformBrightness == Brightness.dark
+            ? Icon(Icons.light_mode)
+            : Icon(Icons.dark_mode);
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {},
+          icon: themeIcon,
+        ),
         actions: [
           onDonePage(),
         ],
         centerTitle: true,
         title: Text(
           'Todo List',
-          style: TextStyle(color: Theme.of(context).primaryColor),
+          style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        unselectedItemColor: Colors.black38,
-        selectedItemColor: Theme.of(context).primaryColor,
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.format_list_bulleted), label: 'Todo'),
