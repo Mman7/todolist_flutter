@@ -16,6 +16,8 @@ class TodoItem extends StatefulWidget {
 class _TodoItemState extends State<TodoItem> {
   @override
   Widget build(BuildContext context) {
+    final brightness = MediaQuery.of(context).platformBrightness;
+
     return Opacity(
       opacity: widget.opacity,
       child: Padding(
@@ -25,7 +27,9 @@ class _TodoItemState extends State<TodoItem> {
           decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                    color: Colors.grey.withOpacity(0.6),
+                    color: brightness == Brightness.dark
+                        ? Colors.black26
+                        : Colors.grey.withOpacity(0.65),
                     spreadRadius: 6,
                     blurRadius: 10,
                     offset: const Offset(0, 5))
