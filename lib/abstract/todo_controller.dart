@@ -1,6 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:hexcolor/hexcolor.dart';
 export './todo_controller.dart' show TodoController;
 
 class TodoController {
@@ -91,33 +90,5 @@ class TodoController {
     todoList.insert(newIndex, moveItem);
     saveData('todo', todoList);
     return todoList;
-  }
-
-  openDialog(String _title, String _buttonText, context, controller) {
-    return showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-              title: Text(
-                _title,
-                style: Theme.of(context).textTheme.bodyText1,
-              ),
-              backgroundColor: HexColor('#224064'),
-              content: TextField(
-                style: const TextStyle(color: Colors.white),
-                autofocus: true,
-                controller: controller,
-              ),
-              actions: [
-                TextButton(
-                    style: ButtonStyle(
-                        backgroundColor:
-                            MaterialStateProperty.all(HexColor('#008282'))),
-                    onPressed: () => Navigator.of(context).pop(controller.text),
-                    child: Text(
-                      _buttonText,
-                      style: const TextStyle(color: Colors.white),
-                    ))
-              ],
-            ));
   }
 }
