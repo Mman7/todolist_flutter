@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'abstract/widget/custom_pop_up_inside_layout.dart';
 import 'abstract/widget/custom_button.dart';
 import 'abstract/widget/todo_item.dart';
 import 'abstract/todo_controller.dart';
+import 'package:provider/provider.dart';
+import 'abstract/providers/theme_provider.dart';
 
-//TODo Theme problem
-// ? how to change thememode via something
 void main() {
-  runApp(const MyApp());
+  runApp(MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => ThemeProvider())],
+      child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -17,12 +20,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: TodoList(),
+      home: const TodoList(),
       title: 'Simple Todo',
+      themeMode: context.watch<ThemeProvider>().themeMode,
       darkTheme: ThemeData(
           dialogTheme: DialogTheme(
-              contentTextStyle: TextStyle(color: Colors.white),
-              backgroundColor: Colors.black.withAlpha(1000),
+              contentTextStyle: const TextStyle(color: Colors.white),
+              backgroundColor: const Color.fromARGB(255, 39, 39, 39),
               titleTextStyle:
                   TextStyle(color: Theme.of(context).colorScheme.secondary)),
           popupMenuTheme: PopupMenuThemeData(
@@ -68,7 +72,7 @@ class MyApp extends StatelessWidget {
 }
 
 class TodoList extends StatefulWidget {
-  TodoList({
+  const TodoList({
     Key? key,
   }) : super(key: key);
   @override
@@ -94,6 +98,19 @@ class _TodoListState extends State<TodoList> {
     super.initState();
     _textFieldController = TextEditingController();
     intialTodo();
+    intialTheme();
+  }
+
+  intialTheme() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int intialTheme = prefs.getInt('theme') ?? 0;
+    if (intialTheme == 0) return;
+    if (intialTheme == 1) {
+      context.read<ThemeProvider>().changeTheme(ThemeMode.light);
+    }
+    if (intialTheme == 2) {
+      context.read<ThemeProvider>().changeTheme(ThemeMode.dark);
+    }
   }
 
   intialTodo() async {
@@ -138,8 +155,8 @@ class _TodoListState extends State<TodoList> {
               content: TextField(
                 autofocus: true,
                 style: TextStyle(
-                    color: MediaQuery.of(context).platformBrightness ==
-                            Brightness.dark
+                    color: context.read<ThemeProvider>().themeMode ==
+                            ThemeMode.dark
                         ? Colors.white
                         : Colors.black),
                 controller: _textFieldController,
@@ -165,11 +182,13 @@ class _TodoListState extends State<TodoList> {
         onPressed: () => showDialog(
             context: context,
             builder: (BuildContext context) => AlertDialog(
-                  backgroundColor: Theme.of(context).bottomAppBarColor,
                   title: Text(
                     'Are you sure delete forever?',
                     style: TextStyle(
-                        color: Colors.black,
+                        color: context.read<ThemeProvider>().themeMode ==
+                                ThemeMode.dark
+                            ? Colors.white
+                            : Colors.black,
                         fontWeight:
                             Theme.of(context).textTheme.bodyLarge?.fontWeight,
                         fontSize:
@@ -208,6 +227,16 @@ class _TodoListState extends State<TodoList> {
     );
   }
 
+  saveTheme(ThemeMode currentTheme) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (currentTheme == ThemeMode.light) {
+      prefs.setInt('theme', 1);
+    } else {
+      // if currentTheme is dark
+      prefs.setInt('theme', 2);
+    }
+  }
+
   Widget onTodoPage() {
     if (_selectedIndex != 0) return Container();
     return FloatingActionButton(
@@ -233,14 +262,24 @@ class _TodoListState extends State<TodoList> {
 
   @override
   Widget build(BuildContext context) {
-    final Icon themeIcon =
-        MediaQuery.of(context).platformBrightness == Brightness.dark
-            ? Icon(Icons.light_mode)
-            : Icon(Icons.dark_mode);
+    ThemeMode currentTheme = context.read<ThemeProvider>().themeMode;
+
+    final Icon themeIcon = currentTheme == ThemeMode.light
+        ? const Icon(Icons.dark_mode)
+        : const Icon(Icons.light_mode);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () {},
+          onPressed: () {
+            if (currentTheme == ThemeMode.light) {
+              context.read<ThemeProvider>().changeTheme(ThemeMode.dark);
+              saveTheme(ThemeMode.dark);
+            } else {
+              context.read<ThemeProvider>().changeTheme(ThemeMode.light);
+              saveTheme(ThemeMode.light);
+            }
+          },
           icon: themeIcon,
         ),
         actions: [
