@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tinycolor/tinycolor.dart';
 
 class TodoItem extends StatefulWidget {
   const TodoItem({
@@ -21,21 +22,26 @@ class _TodoItemState extends State<TodoItem> {
     return Opacity(
       opacity: widget.opacity,
       child: Padding(
-        padding: const EdgeInsets.all(5.5),
+        padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 7.5),
         child: Container(
-          padding: const EdgeInsets.all(5),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
                     color: brightness == Brightness.dark
                         ? Colors.black26
-                        : Colors.grey.withOpacity(0.65),
-                    spreadRadius: 6,
-                    blurRadius: 10,
+                        : Colors.grey,
+                    spreadRadius: 3,
+                    blurRadius: 5,
                     offset: const Offset(0, 5))
               ],
               borderRadius: BorderRadius.circular(7.5),
-              color: Theme.of(context).colorScheme.primary),
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .darken(10)
+                  .withBlue(500)
+                  .darken(7)),
           child: widget.child,
         ),
       ),

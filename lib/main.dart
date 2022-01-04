@@ -7,6 +7,7 @@ import 'abstract/widget/todo_item.dart';
 import 'abstract/todo_controller.dart';
 import 'package:provider/provider.dart';
 import 'abstract/providers/theme_provider.dart';
+import 'package:tinycolor/tinycolor.dart';
 
 void main() {
   runApp(MultiProvider(
@@ -24,6 +25,9 @@ class MyApp extends StatelessWidget {
       title: 'Simple Todo',
       themeMode: context.watch<ThemeProvider>().themeMode,
       darkTheme: ThemeData(
+          floatingActionButtonTheme: FloatingActionButtonThemeData(
+              foregroundColor: Theme.of(context).secondaryHeaderColor,
+              backgroundColor: Theme.of(context).primaryColor),
           dialogTheme: DialogTheme(
               contentTextStyle: const TextStyle(color: Colors.white),
               backgroundColor: const Color.fromARGB(255, 39, 39, 39),
@@ -32,16 +36,17 @@ class MyApp extends StatelessWidget {
           popupMenuTheme: PopupMenuThemeData(
             color: Colors.black.withAlpha(1000),
           ),
-          appBarTheme: const AppBarTheme(backgroundColor: Colors.black38),
+          appBarTheme: AppBarTheme(
+              backgroundColor: Theme.of(context).primaryColor.darken(55)),
           textTheme: const TextTheme(
             bodyText1: TextStyle(color: Colors.white, fontSize: 20),
           ),
           primaryColor: Colors.blue,
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
-              backgroundColor: Colors.black38,
+              backgroundColor: Theme.of(context).primaryColor.darken(55),
               selectedItemColor: Colors.blue,
               unselectedItemColor: Colors.grey.withOpacity(0.5)),
-          backgroundColor: Colors.white.withOpacity(0.1)),
+          backgroundColor: Colors.white.withOpacity(0.125)),
       theme: ThemeData(
           textButtonTheme: TextButtonThemeData(
               style: ButtonStyle(
@@ -254,8 +259,6 @@ class _TodoListState extends State<TodoList> {
             .then((newTodoList) => setState(() => _todoTask = newTodoList));
         _textFieldController.text = '';
       },
-      backgroundColor: Theme.of(context).primaryColor,
-      foregroundColor: Theme.of(context).bottomAppBarColor,
       child: const Icon(
         Icons.add,
       ),
