@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
           textTheme: const TextTheme(
             bodyText1: TextStyle(color: Colors.white, fontSize: 20),
           ),
-          primaryColor: Colors.blue,
+          primaryColor: Color.fromARGB(255, 35, 178, 255),
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
               backgroundColor: Colors.black38,
               selectedItemColor: Colors.blue,
@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
                       Theme.of(context).bottomAppBarColor),
                   backgroundColor: MaterialStateProperty.all(
                       Theme.of(context).primaryColor))),
-          primaryColor: HexColor('#39A0FF'),
+          primaryColor: Color.fromARGB(255, 35, 178, 255),
           backgroundColor: HexColor('#E5EEF5'),
           canvasColor: HexColor('#ffffff').withOpacity(0.35),
           dialogTheme: DialogTheme(
@@ -270,6 +270,7 @@ class _TodoListState extends State<TodoList> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).primaryColor,
         leading: IconButton(
           onPressed: () {
             if (currentTheme == ThemeMode.light) {
