@@ -11,10 +11,5 @@ this project is a simple todo list that i make for myself
 
 ## App pic
 
-![Light Theme 1](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1641265885.png)
+![1/4/2022](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1641265885.png)
 
-![Light Theme 2](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1641265891.png)
-
-![Dark Theme 1](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1641265896.png)
-
-![Dark Theme 2](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1641265898.png)
