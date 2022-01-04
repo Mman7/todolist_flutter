@@ -24,7 +24,7 @@ class _TodoItemState extends State<TodoItem> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 7.5),
         child: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
