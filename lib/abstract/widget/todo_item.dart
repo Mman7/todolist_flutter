@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/src/provider.dart';
+import 'package:simple_todo/abstract/providers/theme_provider.dart';
 import 'package:tinycolor/tinycolor.dart';
 
 class TodoItem extends StatefulWidget {
@@ -17,18 +19,22 @@ class TodoItem extends StatefulWidget {
 class _TodoItemState extends State<TodoItem> {
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.of(context).platformBrightness;
+    final themeMode = context.read<ThemeProvider>().themeMode;
+    isDarkTheme(Color color) {
+      if (themeMode == ThemeMode.dark) return color.darken(30);
+      return color.darken(13);
+    }
 
     return Opacity(
       opacity: widget.opacity,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 7.5),
+        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 7.5),
         child: Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                    color: brightness == Brightness.dark
+                    color: themeMode == ThemeMode.dark
                         ? Colors.black26
                         : Colors.grey,
                     spreadRadius: 3,
@@ -36,12 +42,8 @@ class _TodoItemState extends State<TodoItem> {
                     offset: const Offset(0, 5))
               ],
               borderRadius: BorderRadius.circular(7.5),
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .darken(10)
-                  .withBlue(500)
-                  .darken(7)),
+              color: isDarkTheme(
+                  Theme.of(context).colorScheme.primary.withBlue(500))),
           child: widget.child,
         ),
       ),
