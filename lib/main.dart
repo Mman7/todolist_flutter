@@ -37,16 +37,16 @@ class MyApp extends StatelessWidget {
             color: Colors.black.withAlpha(1000),
           ),
           appBarTheme: AppBarTheme(
-              backgroundColor: Theme.of(context).primaryColor.darken(55)),
+              backgroundColor: Theme.of(context).primaryColor.darken(45)),
           textTheme: const TextTheme(
             bodyText1: TextStyle(color: Colors.white, fontSize: 20),
           ),
           primaryColor: Colors.blue,
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
-              backgroundColor: Theme.of(context).primaryColor.darken(55),
+              backgroundColor: Theme.of(context).primaryColor.darken(45),
               selectedItemColor: Colors.blue,
               unselectedItemColor: Colors.grey.withOpacity(0.5)),
-          backgroundColor: Colors.white.withOpacity(0.125)),
+          backgroundColor: Colors.white.withOpacity(0.15)),
       theme: ThemeData(
           textButtonTheme: TextButtonThemeData(
               style: ButtonStyle(
