@@ -36,7 +36,7 @@ class _TodoItemState extends State<TodoItem> {
                 BoxShadow(
                     color: themeMode == ThemeMode.dark
                         ? Colors.black26
-                        : Colors.grey,
+                        : Colors.grey.withOpacity(0.75),
                     spreadRadius: 3,
                     blurRadius: 5,
                     offset: const Offset(0, 5))
