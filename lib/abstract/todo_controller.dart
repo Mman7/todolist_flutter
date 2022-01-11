@@ -16,9 +16,12 @@ class TodoController {
   }
 
   Future<List<String>> addTask(
-      {required List<String> todoList, required value}) async {
+      {required BuildContext context,
+      required List<String> todoList,
+      required value}) async {
     todoList.add(value);
     saveData('todo', todoList);
+    showSnackBar(context: context, message: 'Successfully Added');
     return todoList;
   }
 
