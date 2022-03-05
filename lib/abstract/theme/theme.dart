@@ -55,5 +55,5 @@ ThemeData dark_theme(BuildContext context) {
           backgroundColor: Theme.of(context).primaryColor.darken(45),
           selectedItemColor: Colors.blue,
           unselectedItemColor: Colors.grey.withOpacity(0.5)),
-      backgroundColor: Colors.white.withOpacity(0.15));
+      backgroundColor: Colors.white.withOpacity(0.05));
 }

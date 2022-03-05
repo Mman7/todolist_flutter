@@ -21,8 +21,8 @@ class _TodoItemState extends State<TodoItem> {
   Widget build(BuildContext context) {
     final themeMode = context.read<ThemeProvider>().themeMode;
     isDarkTheme(Color color) {
-      if (themeMode == ThemeMode.dark) return color.darken(30);
-      return color.darken(13);
+      if (themeMode == ThemeMode.dark) return color.darken(35);
+      return color.darken(11);
     }
 
     return Opacity(
@@ -36,9 +36,9 @@ class _TodoItemState extends State<TodoItem> {
                 BoxShadow(
                     color: themeMode == ThemeMode.dark
                         ? Colors.black26
-                        : Colors.grey.withOpacity(0.75),
-                    spreadRadius: 3,
-                    blurRadius: 5,
+                        : Colors.grey,
+                    spreadRadius: 2,
+                    blurRadius: 8,
                     offset: const Offset(0, 5))
               ],
               borderRadius: BorderRadius.circular(7.5),
