@@ -89,8 +89,8 @@ class TodoController {
       required int newIndex}) async {
     final moveItem = todoList[oldIndex];
 
-    todoList.removeAt(oldIndex);
     todoList.insert(newIndex, moveItem);
+    todoList.removeAt(oldIndex);
     saveData('todo', todoList);
     return todoList;
   }
