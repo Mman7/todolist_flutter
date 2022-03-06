@@ -266,12 +266,11 @@ class _TodoListState extends State<TodoList> {
         controller: _controller,
         children: [
           ReorderableListView.builder(
-              onReorder: (oldIndex, newIndex) async => await TodoController()
+              onReorder: (oldIndex, newIndex) async => TodoController()
                   .reOrderItem(
+                      todoList: _todoTask,
                       oldIndex: oldIndex,
-                      newIndex: newIndex,
-                      todoList: _todoTask)
-                  .then((newList) => setState(() => _todoTask = newList)),
+                      newIndex: newIndex),
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               itemCount: _todoTask.length,
               itemBuilder: (context, index) {

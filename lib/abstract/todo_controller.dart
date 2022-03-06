@@ -87,10 +87,13 @@ class TodoController {
       {required List<String> todoList,
       required int oldIndex,
       required int newIndex}) async {
-    final moveItem = todoList[oldIndex];
-
-    todoList.insert(newIndex, moveItem);
-    todoList.removeAt(oldIndex);
+    // if the newIndex is larger than oldIndex newIndex will decrease 1
+    // because reorder widget newIndex is larger than the expected value
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    var temp = todoList.removeAt(oldIndex);
+    todoList.insert(newIndex, temp);
     saveData('todo', todoList);
     return todoList;
   }
