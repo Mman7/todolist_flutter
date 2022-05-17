@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:tinycolor/color_extension.dart';
 
 ThemeData lightTheme(BuildContext context) {
   return ThemeData(
@@ -10,8 +9,9 @@ ThemeData lightTheme(BuildContext context) {
                   Theme.of(context).bottomAppBarColor),
               backgroundColor:
                   MaterialStateProperty.all(Theme.of(context).primaryColor))),
-      primaryColor: Colors.blue,
-      backgroundColor: HexColor('#E5EEF5'),
+      primaryColor: HexColor('#00D1FF'),
+      secondaryHeaderColor: Colors.black,
+      backgroundColor: HexColor('#F0F2F5'),
       canvasColor: HexColor('#ffffff').withOpacity(0.35),
       dialogTheme: DialogTheme(
           backgroundColor: Theme.of(context).bottomAppBarColor,
@@ -36,7 +36,7 @@ ThemeData dark_theme(BuildContext context) {
   return ThemeData(
       floatingActionButtonTheme: FloatingActionButtonThemeData(
           foregroundColor: Theme.of(context).secondaryHeaderColor,
-          backgroundColor: Theme.of(context).primaryColor),
+          backgroundColor: HexColor('#00D1FF')),
       dialogTheme: DialogTheme(
           contentTextStyle: const TextStyle(color: Colors.white),
           backgroundColor: const Color.fromARGB(255, 39, 39, 39),
@@ -45,15 +45,14 @@ ThemeData dark_theme(BuildContext context) {
       popupMenuTheme: PopupMenuThemeData(
         color: Colors.black.withAlpha(1000),
       ),
-      appBarTheme: AppBarTheme(
-          backgroundColor: Theme.of(context).primaryColor.darken(45)),
+      appBarTheme: AppBarTheme(backgroundColor: HexColor('#040934')),
       textTheme: const TextTheme(
         bodyText1: TextStyle(color: Colors.white, fontSize: 20),
       ),
       primaryColor: Colors.blue,
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          backgroundColor: Theme.of(context).primaryColor.darken(45),
+          backgroundColor: HexColor('#040934'),
           selectedItemColor: Colors.blue,
           unselectedItemColor: Colors.grey.withOpacity(0.5)),
-      backgroundColor: Colors.white.withOpacity(0.05));
+      backgroundColor: HexColor('#110630'));
 }
