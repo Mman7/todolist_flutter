@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hexcolor/hexcolor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'abstract/theme/theme.dart';
 import 'abstract/widget/custom_pop_up_inside_layout.dart';
@@ -39,11 +40,11 @@ class TodoList extends StatefulWidget {
 
 class _TodoListState extends State<TodoList> {
   final PageController _controller = PageController();
-  List<String> _doneTask = [];
+  List _doneTask = [];
+  List _todoTask = [];
   String? _inputText;
   int _selectedIndex = 0;
   late TextEditingController _textFieldController;
-  List<String> _todoTask = [];
 
   @override
   void dispose() {
@@ -72,10 +73,8 @@ class _TodoListState extends State<TodoList> {
   }
 
   intialTodo() async {
-    List<String> tododata =
-        await TodoController().getData(dataBaseName: 'todo');
-    List<String> donedata =
-        await TodoController().getData(dataBaseName: 'done');
+    List tododata = await TodoController().getData(dataBaseName: 'todo');
+    List donedata = await TodoController().getData(dataBaseName: 'done');
     setState(() => {_todoTask = tododata, _doneTask = donedata});
   }
 
@@ -87,16 +86,17 @@ class _TodoListState extends State<TodoList> {
   }
 
   editTask(int index) async {
-    _textFieldController.text = _todoTask[index];
+    _textFieldController.text = _todoTask[index][1];
     final text = await openDialog('Edit Task', 'Edit');
     if (text == null) return;
     setState(() {
-      _todoTask[index] = text;
+      _todoTask[index][1] = text;
     });
     _textFieldController.text = '';
     TodoController().saveData('todo', _todoTask);
     TodoController()
         .showSnackBar(context: context, message: 'Successfully Edited');
+    setState(() {});
   }
 
   openDialog(String _title, String _buttonText) {
@@ -197,21 +197,33 @@ class _TodoListState extends State<TodoList> {
 
   Widget onTodoPage() {
     if (_selectedIndex != 0) return Container();
-    return FloatingActionButton(
-      onPressed: () async {
-        _textFieldController.text = '';
-        String? value = await openDialog('Todo Task', 'Add');
-        if (value == null) return;
-        setState(() {
-          _inputText = value;
-        });
-        TodoController()
-            .addTask(context: context, todoList: _todoTask, value: _inputText)
-            .then((newTodoList) => setState(() => _todoTask = newTodoList));
-        _textFieldController.text = '';
-      },
-      child: const Icon(
-        Icons.add,
+    return Container(
+      decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+                color: HexColor('#0085FF').withOpacity(0.65),
+                spreadRadius: 0.25,
+                blurRadius: 20,
+                offset: const Offset(0, 0))
+          ],
+          color: Theme.of(context).primaryColor,
+          borderRadius: BorderRadius.circular(50)),
+      child: FloatingActionButton(
+        onPressed: () async {
+          _textFieldController.text = '';
+          String? value = await openDialog('Todo Task', 'Add');
+          if (value == null) return;
+          setState(() {
+            _inputText = value;
+          });
+          TodoController()
+              .addTask(context: context, todoList: _todoTask, value: _inputText)
+              .then((newTodoList) => setState(() => _todoTask = newTodoList));
+          _textFieldController.text = '';
+        },
+        child: const Icon(
+          Icons.add,
+        ),
       ),
     );
   }
@@ -242,9 +254,9 @@ class _TodoListState extends State<TodoList> {
           onDonePage(),
         ],
         centerTitle: true,
-        title: Text(
+        title: const Text(
           'Todo List',
-          style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
+          style: TextStyle(color: Colors.white),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -277,10 +289,11 @@ class _TodoListState extends State<TodoList> {
                 return TodoItem(
                   key: ValueKey(index),
                   opacity: 1.0,
+                  isSpecial: _todoTask[index][0],
                   child: ListTile(
                     dense: true,
                     title: Text(
-                      _todoTask[index],
+                      _todoTask[index][1],
                       style: TextStyle(
                           color: Theme.of(context).textTheme.bodyText1?.color,
                           fontSize:
@@ -323,9 +336,20 @@ class _TodoListState extends State<TodoList> {
                                         iconData: Icons.edit,
                                       )),
                                   PopupMenuItem(
-                                      textStyle: TextStyle(
-                                          color:
-                                              Theme.of(context).primaryColor),
+                                      onTap: () {
+                                        TodoController().setAsSpecial(
+                                            index: index, context: context);
+                                        setState(() {
+                                          _todoTask[index][0] =
+                                              _todoTask[index][0] == 'false'
+                                                  ? 'true'
+                                                  : 'false';
+                                        });
+                                      },
+                                      child: CustomPopUpInside(
+                                          text: 'Set as special',
+                                          iconData: Icons.star)),
+                                  PopupMenuItem(
                                       onTap: () {
                                         TodoController().deleteTask(
                                           databasename: 'todo',
@@ -349,11 +373,12 @@ class _TodoListState extends State<TodoList> {
               itemCount: _doneTask.length,
               itemBuilder: (context, index) {
                 return TodoItem(
+                  isSpecial: _doneTask[index][0],
                   opacity: 0.5,
                   child: ListTile(
                       dense: true,
                       title: Text(
-                        _doneTask[index],
+                        _doneTask[index][1],
                         style: TextStyle(
                             decoration: TextDecoration.lineThrough,
                             color: Theme.of(context).textTheme.bodyText1?.color,
@@ -376,11 +401,14 @@ class _TodoListState extends State<TodoList> {
                           iconData: Icons.subdirectory_arrow_left,
                         ),
                         CustomButton(
-                          callback: () => TodoController().deleteTask(
-                              list: _doneTask,
-                              removeIndex: index,
-                              databasename: 'done',
-                              context: context),
+                          callback: () => {
+                            TodoController().deleteTask(
+                                list: _doneTask,
+                                removeIndex: index,
+                                databasename: 'done',
+                                context: context),
+                            setState(() {})
+                          },
                           iconData: Icons.delete_outline,
                         ),
                       ])),
