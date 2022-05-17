@@ -1,10 +1,12 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 export './todo_controller.dart' show TodoController;
 
 class TodoController {
   void deleteTask(
-      {required List<String> list,
+      {required List list,
       required int removeIndex,
       required String databasename,
       required BuildContext context,
@@ -15,20 +17,27 @@ class TodoController {
         .showSnackBar(context: context, message: 'Successfully Deleted');
   }
 
-  Future<List<String>> addTask(
+  Future<List> addTask(
       {required BuildContext context,
-      required List<String> todoList,
+      required List todoList,
       required value}) async {
-    todoList.add(value);
+    todoList.add(['false', value]);
     saveData('todo', todoList);
     showSnackBar(context: context, message: 'Successfully Added');
     return todoList;
   }
 
+  Future setAsSpecial({required index, required context}) async {
+    var data = await getData(dataBaseName: 'todo');
+    data[index][0] = data[index][0] == 'false' ? 'true' : 'false';
+    saveData('todo', data);
+    showSnackBar(context: context, message: 'Successfully Set As Special');
+  }
+
   Future returnTask({
     required BuildContext context,
-    required List<String> todoList,
-    required List<String> doneList,
+    required List todoList,
+    required List doneList,
     required int returnItemIndex,
   }) async {
     final returnItem = doneList[returnItemIndex];
@@ -40,11 +49,11 @@ class TodoController {
     return doneList;
   }
 
-  Future<List<String>> completeTask({
+  Future<List> completeTask({
     required BuildContext context,
     required int completedIndex,
-    required List<String> todoList,
-    required List<String> doneList,
+    required List todoList,
+    required List doneList,
   }) async {
     final completedItem = todoList[completedIndex];
     todoList.removeAt(completedIndex);
@@ -55,9 +64,10 @@ class TodoController {
     return todoList;
   }
 
-  void saveData(String dataBaseName, List<String> dataItemList) async {
+  void saveData(String dataBaseName, List dataItemList) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList(dataBaseName, dataItemList);
+    var data = json.encode(dataItemList);
+    prefs.setString(dataBaseName, data);
   }
 
   showSnackBar({required BuildContext context, required String message}) {
@@ -67,15 +77,29 @@ class TodoController {
         content: Text(message)));
   }
 
-  Future<List<String>> getData({required String dataBaseName}) async {
+  Future<List> getData({required String dataBaseName}) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    var data = prefs.getStringList(dataBaseName);
-    return data ?? [];
+    var hey = prefs.getString(dataBaseName) ?? '[]';
+    List data = json.decode(hey);
+    // ignore: prefer_typing_uninitialized_variables
+    var newData;
+    isStringOrNot(value) => value.runtimeType == String ? true : false;
+    for (var i in data) {
+      if (isStringOrNot(i)) {
+        newData = [
+          ...?newData,
+          ['false', i]
+        ];
+      } else {
+        newData = [...?newData, i];
+      }
+    }
+    return newData ?? [];
   }
 
-  Future<List<String>> cleanDoneTask({
+  Future<List> cleanDoneTask({
     required BuildContext context,
-    required List<String> doneList,
+    required List doneList,
   }) async {
     doneList = [];
     TodoController().saveData('done', doneList);
@@ -83,8 +107,8 @@ class TodoController {
     return doneList;
   }
 
-  Future<List<String>> reOrderItem(
-      {required List<String> todoList,
+  Future<List> reOrderItem(
+      {required List todoList,
       required int oldIndex,
       required int newIndex}) async {
     // if the newIndex is larger than oldIndex newIndex will decrease 1
