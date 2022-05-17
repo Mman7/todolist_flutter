@@ -12,7 +12,7 @@ This is a very simplify project that i make for myself.
 
 ## App pic
 
-![1]](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1.png)
+![1](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1.png)
 
-![second pic]](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_2.png)
+![second pic](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_2.png)
 
