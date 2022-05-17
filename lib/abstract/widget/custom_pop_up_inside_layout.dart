@@ -15,9 +15,9 @@ class CustomPopUpInside extends StatelessWidget {
       children: [
         Text(
           text,
-          style: TextStyle(color: Theme.of(context).primaryColor),
+          style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
         ),
-        Icon(iconData, color: Theme.of(context).primaryColor)
+        Icon(iconData, color: Theme.of(context).secondaryHeaderColor)
       ],
     );
   }
