@@ -9,6 +9,8 @@ import 'abstract/todo_controller.dart';
 import 'package:provider/provider.dart';
 import 'abstract/providers/theme_provider.dart';
 
+//build command: flutter build apk --split-per-abi --no-shrink --no-sound-null-safety
+
 void main() {
   runApp(MultiProvider(
       providers: [ChangeNotifierProvider(create: (_) => ThemeProvider())],
@@ -24,7 +26,7 @@ class MyApp extends StatelessWidget {
       home: const TodoList(),
       title: 'Simple Todo',
       themeMode: context.watch<ThemeProvider>().themeMode,
-      darkTheme: dark_theme(context),
+      darkTheme: darkTheme(context),
       theme: lightTheme(context),
     );
   }
