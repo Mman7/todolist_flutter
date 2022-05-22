@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:provider/src/provider.dart';
-import 'package:simple_todo/abstract/providers/theme_provider.dart';
 import 'package:tinycolor/tinycolor.dart';
 
 class TodoItem extends StatefulWidget {
@@ -23,7 +21,6 @@ class TodoItem extends StatefulWidget {
 class _TodoItemState extends State<TodoItem> {
   @override
   Widget build(BuildContext context) {
-    final themeMode = context.read<ThemeProvider>().themeMode;
     final normalGradientColor = [HexColor('#0500FF'), HexColor('#00D1FF')];
     final specialGradientColor = [HexColor('#FF1FB3'), HexColor('#FFA800')];
 
@@ -31,7 +28,8 @@ class _TodoItemState extends State<TodoItem> {
       opacity: widget.opacity,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 15),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
             gradient: LinearGradient(
