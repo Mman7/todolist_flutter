@@ -32,7 +32,7 @@ ThemeData lightTheme(BuildContext context) {
       ));
 }
 
-ThemeData dark_theme(BuildContext context) {
+ThemeData darkTheme(BuildContext context) {
   return ThemeData(
       floatingActionButtonTheme: FloatingActionButtonThemeData(
           foregroundColor: Theme.of(context).secondaryHeaderColor,
