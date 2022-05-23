@@ -21,6 +21,7 @@ class TodoController {
       {required BuildContext context,
       required List todoList,
       required value}) async {
+    if (value == '') return todoList;
     todoList.add(['false', value]);
     saveData('todo', todoList);
     showSnackBar(context: context, message: 'Successfully Added');
