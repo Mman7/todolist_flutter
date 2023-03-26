@@ -157,8 +157,8 @@ class _TodoListState extends State<TodoList> {
                   actions: [
                     TextButton(
                         style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(
-                                Theme.of(context).primaryColor)),
+                            backgroundColor:
+                                MaterialStateProperty.all(Colors.grey)),
                         onPressed: () {
                           Navigator.of(context).pop();
                         },
@@ -166,8 +166,8 @@ class _TodoListState extends State<TodoList> {
                             style: TextStyle(color: Colors.white))),
                     TextButton(
                         style: ButtonStyle(
-                            backgroundColor:
-                                MaterialStateProperty.all(Colors.redAccent)),
+                            backgroundColor: MaterialStateProperty.all(
+                                Theme.of(context).primaryColor)),
                         onPressed: () {
                           TodoController()
                               .cleanDoneTask(
@@ -218,6 +218,7 @@ class _TodoListState extends State<TodoList> {
           setState(() {
             _inputText = value;
           });
+
           TodoController()
               .addTask(context: context, todoList: _todoTask, value: _inputText)
               .then((newTodoList) => setState(() => _todoTask = newTodoList));
@@ -292,80 +293,78 @@ class _TodoListState extends State<TodoList> {
                   key: ValueKey(index),
                   opacity: 1.0,
                   isSpecial: _todoTask[index][0],
-                  child: ListTile(
-                    dense: true,
-                    title: Text(
-                      _todoTask[index][1],
-                      style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyText1?.color,
-                          fontSize:
-                              Theme.of(context).textTheme.bodyText1?.fontSize),
-                    ),
-                    trailing: Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        CustomButton(
-                          callback: () async => {
-                            TodoController()
-                                .completeTask(
-                                  context: context,
-                                  completedIndex: index,
-                                  doneList: _doneTask,
-                                  todoList: _todoTask,
-                                )
-                                .then((value) =>
-                                    setState(() => _todoTask = value))
-                          },
-                          iconData: Icons.done,
-                        ),
-                        PopupMenuButton(
-                            icon: const Icon(
-                              Icons.more_vert,
-                              color: Colors.white,
-                            ),
-                            itemBuilder: (BuildContext context) => [
-                                  PopupMenuItem(
+                  child: GestureDetector(
+                    onDoubleTap: () {
+                      TodoController()
+                          .setAsSpecial(index: index, context: context);
+                      setState(() {
+                        _todoTask[index][0] =
+                            _todoTask[index][0] == 'false' ? 'true' : 'false';
+                      });
+                    },
+                    child: ListTile(
+                      dense: true,
+                      title: Text(
+                        _todoTask[index][1],
+                        style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyText1?.color,
+                            fontSize: Theme.of(context)
+                                .textTheme
+                                .bodyText1
+                                ?.fontSize),
+                      ),
+                      trailing: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          CustomButton(
+                            callback: () async => {
+                              TodoController()
+                                  .completeTask(
+                                    context: context,
+                                    completedIndex: index,
+                                    doneList: _doneTask,
+                                    todoList: _todoTask,
+                                  )
+                                  .then((value) =>
+                                      setState(() => _todoTask = value))
+                            },
+                            iconData: Icons.done,
+                          ),
+                          PopupMenuButton(
+                              icon: const Icon(
+                                Icons.more_vert,
+                                color: Colors.white,
+                              ),
+                              itemBuilder: (BuildContext context) => [
+                                    PopupMenuItem(
 
-                                      /// Solution of this
-                                      /// https://stackoverflow.com/questions/69939559/showdialog-bug-dialog-isnt-triggered-from-popupmenubutton-in-flutter
-                                      onTap: () {
-                                        Future.delayed(
-                                            const Duration(seconds: 0),
-                                            () => editTask(index));
-                                      },
-                                      child: CustomPopUpInside(
-                                        text: 'Edit',
-                                        iconData: Icons.edit,
-                                      )),
-                                  PopupMenuItem(
-                                      onTap: () {
-                                        TodoController().setAsSpecial(
-                                            index: index, context: context);
-                                        setState(() {
-                                          _todoTask[index][0] =
-                                              _todoTask[index][0] == 'false'
-                                                  ? 'true'
-                                                  : 'false';
-                                        });
-                                      },
-                                      child: CustomPopUpInside(
-                                          text: 'Set as special',
-                                          iconData: Icons.star)),
-                                  PopupMenuItem(
-                                      onTap: () {
-                                        TodoController().deleteTask(
-                                          databasename: 'todo',
-                                          list: _todoTask,
-                                          removeIndex: index,
-                                          context: context,
-                                        );
-                                        setState(() {});
-                                      },
-                                      child: CustomPopUpInside(
-                                          text: 'Delete',
-                                          iconData: Icons.delete))
-                                ])
-                      ],
+                                        /// Solution of this
+                                        /// https://stackoverflow.com/questions/69939559/showdialog-bug-dialog-isnt-triggered-from-popupmenubutton-in-flutter
+                                        onTap: () {
+                                          Future.delayed(
+                                              const Duration(seconds: 0),
+                                              () => editTask(index));
+                                        },
+                                        child: CustomPopUpInside(
+                                          text: 'Edit',
+                                          iconData: Icons.edit,
+                                        )),
+                                    PopupMenuItem(
+                                        onTap: () {
+                                          TodoController().deleteTask(
+                                            databasename: 'todo',
+                                            list: _todoTask,
+                                            removeIndex: index,
+                                            context: context,
+                                          );
+                                          setState(() {});
+                                        },
+                                        child: CustomPopUpInside(
+                                            text: 'Delete',
+                                            iconData: Icons.delete))
+                                  ])
+                        ],
+                      ),
                     ),
                   ),
                 );
