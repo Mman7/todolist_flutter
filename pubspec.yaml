@@ -36,7 +36,6 @@ dependencies:
   hexcolor: ^2.0.5
   shared_preferences: ^2.0.9
   provider: ^6.0.2
-  tinycolor: ^1.0.3
 
 dev_dependencies:
   flutter_test:
