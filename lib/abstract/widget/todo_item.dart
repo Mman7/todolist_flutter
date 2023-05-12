@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:tinycolor/tinycolor.dart';
 
 class TodoItem extends StatefulWidget {
   const TodoItem(
@@ -8,12 +7,13 @@ class TodoItem extends StatefulWidget {
       required this.opacity,
       required this.child,
       required,
-      required this.isSpecial})
+      required this.isHighlight})
       : super(key: key);
 
   final Widget child;
   final double opacity;
-  final String isSpecial;
+  final String isHighlight;
+
   @override
   _TodoItemState createState() => _TodoItemState();
 }
@@ -21,8 +21,12 @@ class TodoItem extends StatefulWidget {
 class _TodoItemState extends State<TodoItem> {
   @override
   Widget build(BuildContext context) {
-    final normalGradientColor = [HexColor('#0500FF'), HexColor('#00D1FF')];
-    final specialGradientColor = [HexColor('#FF1FB3'), HexColor('#FFA800')];
+    final backgroundColour = widget.isHighlight == 'true'
+        ? HexColor('#1C77FF') // blue
+        : HexColor('#0057E7'); // Darker blue
+
+    final shadowColor =
+        widget.isHighlight == 'true' ? HexColor('#1C77FF') : Colors.transparent;
 
     return Opacity(
       opacity: widget.opacity,
@@ -32,22 +36,20 @@ class _TodoItemState extends State<TodoItem> {
           duration: const Duration(milliseconds: 300),
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-                colors: widget.isSpecial == 'true'
-                    ? specialGradientColor
-                    : normalGradientColor,
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight),
+            color: backgroundColour,
             boxShadow: [
               BoxShadow(
-                  color: widget.isSpecial == 'true'
-                      ? HexColor('#FFA506').withOpacity(0.65)
-                      : HexColor('#0085FF').withOpacity(0.65),
-                  spreadRadius: 0.25,
-                  blurRadius: 20,
+                  color: shadowColor,
+                  spreadRadius: 0,
+                  blurRadius: 45,
+                  offset: const Offset(0, 0)),
+              BoxShadow(
+                  color: shadowColor,
+                  spreadRadius: 0,
+                  blurRadius: 10,
                   offset: const Offset(0, 0))
             ],
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(15),
           ),
           child: widget.child,
         ),
