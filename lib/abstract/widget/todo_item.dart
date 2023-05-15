@@ -22,8 +22,8 @@ class _TodoItemState extends State<TodoItem> {
   @override
   Widget build(BuildContext context) {
     final backgroundColour = widget.isHighlight == 'true'
-        ? HexColor('#1C77FF') // blue
-        : HexColor('#0057E7'); // Darker blue
+        ? HexColor('#1C92FF') // blue
+        : HexColor('#0057FF'); // Darker blue
 
     final shadowColor =
         widget.isHighlight == 'true' ? HexColor('#1C77FF') : Colors.transparent;
