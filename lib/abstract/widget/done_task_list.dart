@@ -11,7 +11,6 @@ class DoneTaskList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var _todoTask = context.watch<DataProvider>().todoTasks;
     var _doneTask = context.watch<DataProvider>().doneTasks;
     var dataContext = context.watch<DataProvider>();
 
@@ -34,7 +33,7 @@ class DoneTaskList extends StatelessWidget {
                 ),
                 trailing: Wrap(children: [
                   CustomButton(
-                    callback: () async => await dataContext.returnTask(
+                    callback: () => dataContext.returnTask(
                       context: context,
                       returnItemIndex: index,
                     ),
