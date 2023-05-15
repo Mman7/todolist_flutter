@@ -1,9 +1,4 @@
 import 'package:flutter/material.dart';
-import "package:provider/provider.dart";
-
-/// Providers
-import '../providers/theme_provider.dart';
-import '../providers/data_provider.dart';
 
 Widget deleteAllButton({selectedIndex, context, doneTask, callback}) {
   if (selectedIndex != 1) return Container();
@@ -18,10 +13,7 @@ Widget deleteAllButton({selectedIndex, context, doneTask, callback}) {
                 title: Text(
                   'Are you sure delete forever?',
                   style: TextStyle(
-                      color: context.read<ThemeProvider>().themeMode ==
-                              ThemeMode.dark
-                          ? Colors.white
-                          : Colors.black,
+                      color: Colors.white,
                       fontWeight:
                           Theme.of(context).textTheme.bodyLarge?.fontWeight,
                       fontSize:
