@@ -5,11 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 class DataProvider with ChangeNotifier {
   List<dynamic> _todoTasks = [];
   List<dynamic> _doneTasks = [];
+  dynamic prefs;
 
   get todoTasks => _todoTasks;
   get doneTasks => _doneTasks;
 
   intializeData() async {
+    prefs = await SharedPreferences.getInstance();
     _todoTasks = await getData(dataBaseName: 'todo');
     _doneTasks = await getData(dataBaseName: 'done');
     notifyListeners();
@@ -35,22 +37,21 @@ class DataProvider with ChangeNotifier {
   }
 
   Future setAsSpecial({required index, required context}) async {
-    var data = await getData(
-        dataBaseName:
-            'todo'); // TODO :using current data no need to get again from database
-    data[index][0] = data[index][0] == 'false' ? 'true' : 'false';
-    saveData('todo', data);
+    var value = json.decode(_todoTasks[index][0]);
+    _todoTasks[index][0] = '${!value}';
+    saveData('todo', _todoTasks);
     showSnackBar(context: context, message: 'Successfully Set As Special');
+    notifyListeners();
   }
 
   showSnackBar({required BuildContext context, required String message}) {
     return ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         backgroundColor: Theme.of(context).primaryColor,
-        duration: const Duration(milliseconds: 1000),
+        duration: const Duration(milliseconds: 800),
         content: Text(message)));
   }
 
-  Future returnTask({
+  returnTask({
     required BuildContext context,
     required int returnItemIndex,
   }) async {
@@ -63,10 +64,10 @@ class DataProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future completeTask({
+  completeTask({
     required BuildContext context,
     required int completedIndex,
-  }) async {
+  }) {
     final completedItem = _todoTasks[completedIndex];
     _todoTasks.removeAt(completedIndex);
     _doneTasks.insert(0, completedItem);
@@ -76,17 +77,15 @@ class DataProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void saveData(String dataBaseName, List dataItemList) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  saveData(String dataBaseName, List dataItemList) {
     var data = json.encode(dataItemList);
     prefs.setString(dataBaseName, data);
   }
 
   Future getData({required String dataBaseName}) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var hey = prefs.getString(dataBaseName) ?? '[]';
-    // if it doesnt get any data return empty array
-    List data = json.decode(hey);
+    //* if it doesnt get any data return empty array
+    var rawData = prefs.getString(dataBaseName) ?? '[]';
+    List data = json.decode(rawData);
     return data;
   }
 
@@ -100,17 +99,15 @@ class DataProvider with ChangeNotifier {
   }
 
   Future<List> reOrderItem(
-      {required List todoList,
-      required int oldIndex,
-      required int newIndex}) async {
+      {required int oldIndex, required int newIndex}) async {
     // if the newIndex is larger than oldIndex newIndex will decrease 1
     // because reorder widget newIndex is larger than the expected value
     if (newIndex > oldIndex) {
       newIndex -= 1;
     }
-    var temp = todoList.removeAt(oldIndex);
-    todoList.insert(newIndex, temp);
-    saveData('todo', todoList);
-    return todoList;
+    var temp = _todoTasks.removeAt(oldIndex);
+    _todoTasks.insert(newIndex, temp);
+    saveData('todo', _todoTasks);
+    return _todoTasks;
   }
 }
