@@ -20,7 +20,7 @@ ThemeData darkTheme(BuildContext context) {
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.white, fontSize: 20),
     ),
-    colorScheme: ColorScheme.dark().copyWith(
+    colorScheme: const ColorScheme.dark().copyWith(
       primary: Colors.white,
       background: HexColor(('#110630')),
       brightness: Brightness.dark,
