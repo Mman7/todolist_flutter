@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 
-class TodoItem extends StatefulWidget {
+class TodoItem extends StatelessWidget {
   const TodoItem(
       {Key? key,
       required this.opacity,
@@ -15,21 +15,16 @@ class TodoItem extends StatefulWidget {
   final String isHighlight;
 
   @override
-  _TodoItemState createState() => _TodoItemState();
-}
-
-class _TodoItemState extends State<TodoItem> {
-  @override
   Widget build(BuildContext context) {
-    final backgroundColour = widget.isHighlight == 'true'
+    final backgroundColour = isHighlight == 'true'
         ? HexColor('#1C92FF') // blue
         : HexColor('#0057FF'); // Darker blue
 
     final shadowColor =
-        widget.isHighlight == 'true' ? HexColor('#1C77FF') : Colors.transparent;
+        isHighlight == 'true' ? HexColor('#1C92FF') : Colors.transparent;
 
     return Opacity(
-      opacity: widget.opacity,
+      opacity: opacity,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 15),
         child: AnimatedContainer(
@@ -51,7 +46,7 @@ class _TodoItemState extends State<TodoItem> {
             ],
             borderRadius: BorderRadius.circular(15),
           ),
-          child: widget.child,
+          child: child,
         ),
       ),
     );
