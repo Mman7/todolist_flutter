@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simple_todo/abstract/widget/delete_all_button.dart';
+import 'package:simple_todo/abstract/widget/done_task_list.dart';
+
 import 'abstract/theme/theme.dart';
+import 'abstract/widget/custom_floating_button.dart';
 import 'abstract/widget/custom_pop_up_inside_layout.dart';
 import 'abstract/widget/custom_button.dart';
 import 'abstract/widget/todo_item.dart';
-import 'abstract/todo_controller.dart';
-import 'package:provider/provider.dart';
-import 'abstract/providers/theme_provider.dart';
 
+import 'package:provider/provider.dart';
+import 'abstract/providers/data_provider.dart';
 //build command: flutter build apk --split-per-abi --no-shrink --no-sound-null-safety
 
 void main() {
-  runApp(MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => ThemeProvider())],
-      child: const MyApp()));
+  runApp(MultiProvider(providers: [
+    ChangeNotifierProvider<DataProvider>(create: (_) => DataProvider())
+  ], child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -25,9 +28,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       home: const TodoList(),
       title: 'Simple Todo',
-      themeMode: context.watch<ThemeProvider>().themeMode,
       darkTheme: darkTheme(context),
-      theme: lightTheme(context),
+      themeMode: ThemeMode.dark,
     );
   }
 }
@@ -42,11 +44,10 @@ class TodoList extends StatefulWidget {
 
 class _TodoListState extends State<TodoList> {
   final PageController _controller = PageController();
-  List _doneTask = [];
-  List _todoTask = [];
   String? _inputText;
   int _selectedIndex = 0;
   late TextEditingController _textFieldController;
+  late DataProvider dataContext;
 
   @override
   void dispose() {
@@ -58,26 +59,9 @@ class _TodoListState extends State<TodoList> {
   void initState() {
     super.initState();
     _textFieldController = TextEditingController();
-    intialTodo();
-    intialTheme();
-  }
-
-  intialTheme() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int intialTheme = prefs.getInt('theme') ?? 0;
-    if (intialTheme == 0) return;
-    if (intialTheme == 1) {
-      context.read<ThemeProvider>().changeTheme(ThemeMode.light);
-    }
-    if (intialTheme == 2) {
-      context.read<ThemeProvider>().changeTheme(ThemeMode.dark);
-    }
-  }
-
-  intialTodo() async {
-    List tododata = await TodoController().getData(dataBaseName: 'todo');
-    List donedata = await TodoController().getData(dataBaseName: 'done');
-    setState(() => {_todoTask = tododata, _doneTask = donedata});
+    dataContext = context.read<DataProvider>();
+    dataContext.intializeData();
+    //intialize theme
   }
 
   changePage(int index) {
@@ -88,6 +72,7 @@ class _TodoListState extends State<TodoList> {
   }
 
   editTask(int index) async {
+    final _todoTask = dataContext.todoTasks;
     _textFieldController.text = _todoTask[index][1];
     final text = await openDialog('Edit Task', 'Edit');
     if (text == null) return;
@@ -95,9 +80,8 @@ class _TodoListState extends State<TodoList> {
       _todoTask[index][1] = text;
     });
     _textFieldController.text = '';
-    TodoController().saveData('todo', _todoTask);
-    TodoController()
-        .showSnackBar(context: context, message: 'Successfully Edited');
+    dataContext.saveData('todo', _todoTask);
+    dataContext.showSnackBar(context: context, message: 'Successfully Edited');
     setState(() {});
   }
 
@@ -105,6 +89,8 @@ class _TodoListState extends State<TodoList> {
     return showDialog(
         context: context,
         builder: (context) => AlertDialog(
+              shadowColor: HexColor('#1C92FF').withAlpha(100),
+              backgroundColor: HexColor('#040934'),
               title: Text(
                 _title,
                 style: TextStyle(
@@ -113,16 +99,15 @@ class _TodoListState extends State<TodoList> {
                     fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize),
               ),
               content: TextField(
+                cursorColor: Colors.white,
                 autofocus: true,
-                style: TextStyle(
-                    color: context.read<ThemeProvider>().themeMode ==
-                            ThemeMode.dark
-                        ? Colors.white
-                        : Colors.black),
+                style: const TextStyle(color: Colors.white),
                 controller: _textFieldController,
               ),
               actions: [
                 TextButton(
+                    style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).primaryColor),
                     onPressed: () =>
                         Navigator.of(context).pop(_textFieldController.text),
                     child: Text(
@@ -132,129 +117,29 @@ class _TodoListState extends State<TodoList> {
             ));
   }
 
-  Widget onDonePage() {
-    if (_selectedIndex != 1) return Container();
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 13.5, vertical: 0),
-      child: IconButton(
-        icon: Icon(Icons.delete_forever,
-            size: 40, color: Theme.of(context).secondaryHeaderColor),
-        onPressed: () => showDialog(
-            context: context,
-            builder: (BuildContext context) => AlertDialog(
-                  title: Text(
-                    'Are you sure delete forever?',
-                    style: TextStyle(
-                        color: context.read<ThemeProvider>().themeMode ==
-                                ThemeMode.dark
-                            ? Colors.white
-                            : Colors.black,
-                        fontWeight:
-                            Theme.of(context).textTheme.bodyLarge?.fontWeight,
-                        fontSize:
-                            Theme.of(context).textTheme.bodyLarge?.fontSize),
-                  ),
-                  actions: [
-                    TextButton(
-                        style: ButtonStyle(
-                            backgroundColor:
-                                MaterialStateProperty.all(Colors.grey)),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('No',
-                            style: TextStyle(color: Colors.white))),
-                    TextButton(
-                        style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(
-                                Theme.of(context).primaryColor)),
-                        onPressed: () {
-                          TodoController()
-                              .cleanDoneTask(
-                                  doneList: _doneTask, context: context)
-                              .then((newList) =>
-                                  setState(() => _doneTask = newList));
-                          TodoController().showSnackBar(
-                              context: context,
-                              message: 'Successfully Clean Done Task');
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('Sure',
-                            style: TextStyle(color: Colors.white)))
-                  ],
-                )),
-      ),
-    );
-  }
-
-  saveTheme(ThemeMode currentTheme) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (currentTheme == ThemeMode.light) {
-      prefs.setInt('theme', 1);
-    } else {
-      // if currentTheme is dark
-      prefs.setInt('theme', 2);
-    }
-  }
-
-  Widget onTodoPage() {
-    if (_selectedIndex != 0) return Container();
-    return Container(
-      decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-                color: HexColor('#0085FF').withOpacity(0.65),
-                spreadRadius: 0.25,
-                blurRadius: 20,
-                offset: const Offset(0, 0))
-          ],
-          color: Theme.of(context).primaryColor,
-          borderRadius: BorderRadius.circular(50)),
-      child: FloatingActionButton(
-        onPressed: () async {
-          _textFieldController.text = '';
-          String? value = await openDialog('Todo Task', 'Add');
-          if (value == null) return;
-          setState(() {
-            _inputText = value;
-          });
-
-          TodoController()
-              .addTask(context: context, todoList: _todoTask, value: _inputText)
-              .then((newTodoList) => setState(() => _todoTask = newTodoList));
-          _textFieldController.text = '';
-        },
-        child: const Icon(
-          Icons.add,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    ThemeMode currentTheme = context.read<ThemeProvider>().themeMode;
-
-    final Icon themeIcon = currentTheme == ThemeMode.light
-        ? const Icon(Icons.dark_mode)
-        : const Icon(Icons.light_mode);
+    var _todoTask = context.watch<DataProvider>().todoTasks;
+    var _doneTask = context.watch<DataProvider>().doneTasks;
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            if (currentTheme == ThemeMode.light) {
-              context.read<ThemeProvider>().changeTheme(ThemeMode.dark);
-              saveTheme(ThemeMode.dark);
-            } else {
-              context.read<ThemeProvider>().changeTheme(ThemeMode.light);
-              saveTheme(ThemeMode.light);
-            }
-          },
-          icon: themeIcon,
-        ),
         actions: [
-          onDonePage(),
+          deleteAllButton(
+              selectedIndex: _selectedIndex,
+              context: context,
+              doneTask: _doneTask,
+              callback: () {
+                dataContext.cleanDoneTask(context: context);
+
+                setState(() {
+                  _doneTask = [];
+                });
+
+                dataContext.showSnackBar(
+                    context: context, message: 'Successfully Clean Done Task');
+                // close pop menu
+              }),
         ],
         centerTitle: true,
         title: const Text(
@@ -272,8 +157,20 @@ class _TodoListState extends State<TodoList> {
         onTap: changePage,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: onTodoPage(),
-      backgroundColor: Theme.of(context).backgroundColor,
+      floatingActionButton: _selectedIndex == 0
+          ? customFloatingButton(
+              context: context,
+              onPress: () async {
+                _textFieldController.text = '';
+                String? value = await openDialog('Todo Task', 'Add');
+                if (value == null) return;
+                setState(() {
+                  _inputText = value;
+                });
+                dataContext.addTask(context: context, value: _inputText);
+              })
+          : Container(),
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: PageView(
         onPageChanged: (index) => setState(() {
           _selectedIndex = index;
@@ -281,56 +178,45 @@ class _TodoListState extends State<TodoList> {
         controller: _controller,
         children: [
           ReorderableListView.builder(
-              onReorder: (oldIndex, newIndex) async => TodoController()
-                  .reOrderItem(
-                      todoList: _todoTask,
-                      oldIndex: oldIndex,
-                      newIndex: newIndex),
+              onReorder: (oldIndex, newIndex) async => dataContext.reOrderItem(
+                  oldIndex: oldIndex, newIndex: newIndex),
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               itemCount: _todoTask.length,
               itemBuilder: (context, index) {
                 return TodoItem(
                   key: ValueKey(index),
                   opacity: 1.0,
-                  isSpecial: _todoTask[index][0],
-                  child: GestureDetector(
-                    onDoubleTap: () {
-                      TodoController()
-                          .setAsSpecial(index: index, context: context);
-                      setState(() {
-                        _todoTask[index][0] =
-                            _todoTask[index][0] == 'false' ? 'true' : 'false';
-                      });
-                    },
+                  isHighlight: _todoTask[index][0],
+                  child: XGestureDetector(
+                    onDoubleTap: (e) => dataContext.setAsSpecial(
+                        index: index, context: context),
                     child: ListTile(
                       dense: true,
                       title: Text(
                         _todoTask[index][1],
                         style: TextStyle(
-                            color: Theme.of(context).textTheme.bodyText1?.color,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                             fontSize: Theme.of(context)
                                 .textTheme
-                                .bodyText1
+                                .bodyLarge
                                 ?.fontSize),
                       ),
                       trailing: Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           CustomButton(
-                            callback: () async => {
-                              TodoController()
-                                  .completeTask(
-                                    context: context,
-                                    completedIndex: index,
-                                    doneList: _doneTask,
-                                    todoList: _todoTask,
-                                  )
-                                  .then((value) =>
-                                      setState(() => _todoTask = value))
-                            },
+                            callback: () => dataContext.completeTask(
+                              context: context,
+                              completedIndex: index,
+                            ),
                             iconData: Icons.done,
                           ),
                           PopupMenuButton(
+                              shadowColor: Colors.transparent,
+                              splashRadius: 20,
+                              color: HexColor('#040934').withAlpha(185),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
                               icon: const Icon(
                                 Icons.more_vert,
                                 color: Colors.white,
@@ -345,13 +231,13 @@ class _TodoListState extends State<TodoList> {
                                               const Duration(seconds: 0),
                                               () => editTask(index));
                                         },
-                                        child: CustomPopUpInside(
+                                        child: const CustomPopUpInside(
                                           text: 'Edit',
                                           iconData: Icons.edit,
                                         )),
                                     PopupMenuItem(
                                         onTap: () {
-                                          TodoController().deleteTask(
+                                          dataContext.deleteTask(
                                             databasename: 'todo',
                                             list: _todoTask,
                                             removeIndex: index,
@@ -359,7 +245,7 @@ class _TodoListState extends State<TodoList> {
                                           );
                                           setState(() {});
                                         },
-                                        child: CustomPopUpInside(
+                                        child: const CustomPopUpInside(
                                             text: 'Delete',
                                             iconData: Icons.delete))
                                   ])
@@ -369,52 +255,7 @@ class _TodoListState extends State<TodoList> {
                   ),
                 );
               }),
-          ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-              itemCount: _doneTask.length,
-              itemBuilder: (context, index) {
-                return TodoItem(
-                  isSpecial: _doneTask[index][0],
-                  opacity: 0.5,
-                  child: ListTile(
-                      dense: true,
-                      title: Text(
-                        _doneTask[index][1],
-                        style: TextStyle(
-                            decoration: TextDecoration.lineThrough,
-                            color: Theme.of(context).textTheme.bodyText1?.color,
-                            fontSize: Theme.of(context)
-                                .textTheme
-                                .bodyText1
-                                ?.fontSize),
-                      ),
-                      trailing: Wrap(children: [
-                        CustomButton(
-                          callback: () async => await TodoController()
-                              .returnTask(
-                                context: context,
-                                todoList: _todoTask,
-                                doneList: _doneTask,
-                                returnItemIndex: index,
-                              )
-                              .then(
-                                  (value) => setState(() => _doneTask = value)),
-                          iconData: Icons.subdirectory_arrow_left,
-                        ),
-                        CustomButton(
-                          callback: () => {
-                            TodoController().deleteTask(
-                                list: _doneTask,
-                                removeIndex: index,
-                                databasename: 'done',
-                                context: context),
-                            setState(() {})
-                          },
-                          iconData: Icons.delete_outline,
-                        ),
-                      ])),
-                );
-              }),
+          const DoneTaskList(),
         ],
       ),
     );
