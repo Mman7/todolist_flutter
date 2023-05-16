@@ -48,7 +48,10 @@ class DataProvider with ChangeNotifier {
     return ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         backgroundColor: Theme.of(context).primaryColor,
         duration: const Duration(milliseconds: 800),
-        content: Text(message)));
+        content: Text(
+          message,
+          style: TextStyle(color: Colors.white),
+        )));
   }
 
   returnTask({
