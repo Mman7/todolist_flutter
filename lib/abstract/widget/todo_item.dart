@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 
-class TodoItem extends StatelessWidget {
+class TodoItem extends StatefulWidget {
   const TodoItem(
       {Key? key,
       required this.opacity,
@@ -15,38 +15,60 @@ class TodoItem extends StatelessWidget {
   final String isHighlight;
 
   @override
+  State<TodoItem> createState() => _TodoItemState();
+}
+
+class _TodoItemState extends State<TodoItem> {
+  dynamic paddingValue = 600.00;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        paddingValue = 0.0;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final backgroundColour = isHighlight == 'true'
+    final backgroundColour = widget.isHighlight == 'true'
         ? HexColor('#1C92FF') // blue
         : HexColor('#0057FF'); // Darker blue
 
     final shadowColor =
-        isHighlight == 'true' ? HexColor('#1C92FF') : Colors.transparent;
+        widget.isHighlight == 'true' ? HexColor('#1C92FF') : Colors.transparent;
 
-    return Opacity(
-      opacity: opacity,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 15),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            color: backgroundColour,
-            boxShadow: [
-              BoxShadow(
-                  color: shadowColor,
-                  spreadRadius: 0,
-                  blurRadius: 45,
-                  offset: const Offset(0, 0)),
-              BoxShadow(
-                  color: shadowColor,
-                  spreadRadius: 0,
-                  blurRadius: 10,
-                  offset: const Offset(0, 0))
-            ],
-            borderRadius: BorderRadius.circular(15),
+    return AnimatedPadding(
+      duration: Duration(milliseconds: 350),
+      curve: Curves.fastEaseInToSlowEaseOut,
+      padding: EdgeInsets.only(top: paddingValue),
+      child: Opacity(
+        opacity: widget.opacity,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 15),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: backgroundColour,
+              boxShadow: [
+                BoxShadow(
+                    color: shadowColor,
+                    spreadRadius: 0,
+                    blurRadius: 45,
+                    offset: const Offset(0, 0)),
+                BoxShadow(
+                    color: shadowColor,
+                    spreadRadius: 0,
+                    blurRadius: 10,
+                    offset: const Offset(0, 0))
+              ],
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: widget.child,
           ),
-          child: child,
         ),
       ),
     );
