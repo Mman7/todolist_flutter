@@ -6,7 +6,6 @@ class TodoItem extends StatefulWidget {
       {Key? key,
       required this.opacity,
       required this.child,
-      required,
       required this.isHighlight})
       : super(key: key);
 
@@ -18,17 +17,48 @@ class TodoItem extends StatefulWidget {
   State<TodoItem> createState() => _TodoItemState();
 }
 
-class _TodoItemState extends State<TodoItem> {
-  dynamic paddingValue = 600.00;
+class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
+  late AnimationController slideController;
+  late Animation<Offset> slideAnimation;
+
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        paddingValue = 0.0;
-      });
-    });
+    slideController = AnimationController(
+      duration: const Duration(milliseconds: 450),
+      vsync: this,
+    )..forward();
+    slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, (50.0)),
+      end: const Offset(0.0, 0.0),
+    ).animate(CurvedAnimation(
+      parent: slideController,
+      curve: Curves.fastEaseInToSlowEaseOut,
+    ));
+    super.initState();
+
+    _scaleController = AnimationController(
+      duration: const Duration(
+        milliseconds: 900,
+      ),
+      vsync: this,
+      value: 0.1,
+    )..forward();
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.fastEaseInToSlowEaseOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    slideController.dispose();
+    _scaleController.dispose();
+    super.dispose();
   }
 
   @override
@@ -40,34 +70,35 @@ class _TodoItemState extends State<TodoItem> {
     final shadowColor =
         widget.isHighlight == 'true' ? HexColor('#1C92FF') : Colors.transparent;
 
-    return AnimatedPadding(
-      duration: Duration(milliseconds: 350),
-      curve: Curves.fastEaseInToSlowEaseOut,
-      padding: EdgeInsets.only(top: paddingValue),
-      child: Opacity(
-        opacity: widget.opacity,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 15),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: backgroundColour,
-              boxShadow: [
-                BoxShadow(
-                    color: shadowColor,
-                    spreadRadius: 0,
-                    blurRadius: 45,
-                    offset: const Offset(0, 0)),
-                BoxShadow(
-                    color: shadowColor,
-                    spreadRadius: 0,
-                    blurRadius: 10,
-                    offset: const Offset(0, 0))
-              ],
-              borderRadius: BorderRadius.circular(15),
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: SlideTransition(
+        position: slideAnimation,
+        child: Opacity(
+          opacity: widget.opacity,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 15),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: backgroundColour,
+                boxShadow: [
+                  BoxShadow(
+                      color: shadowColor,
+                      spreadRadius: 0,
+                      blurRadius: 45,
+                      offset: const Offset(0, 0)),
+                  BoxShadow(
+                      color: shadowColor,
+                      spreadRadius: 0,
+                      blurRadius: 10,
+                      offset: const Offset(0, 0))
+                ],
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: widget.child,
             ),
-            child: widget.child,
           ),
         ),
       ),
