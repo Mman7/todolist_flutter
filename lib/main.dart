@@ -1,9 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:hexcolor/hexcolor.dart';
+
 import 'package:simple_todo/abstract/widget/delete_all_button.dart';
 import 'package:simple_todo/abstract/widget/done_task_list.dart';
-
 import 'abstract/theme/theme.dart';
 import 'abstract/widget/custom_floating_button.dart';
 import 'abstract/widget/custom_pop_up_inside_layout.dart';
@@ -44,10 +45,11 @@ class TodoList extends StatefulWidget {
 
 class _TodoListState extends State<TodoList> {
   final PageController _controller = PageController();
-  String? _inputText;
-  int _selectedIndex = 0;
   late TextEditingController _textFieldController;
   late DataProvider dataContext;
+  String? _inputText;
+  int _selectedIndex = 0;
+  final ScrollController scrollController = ScrollController();
 
   @override
   void dispose() {
@@ -61,7 +63,6 @@ class _TodoListState extends State<TodoList> {
     _textFieldController = TextEditingController();
     dataContext = context.read<DataProvider>();
     dataContext.intializeData();
-    //intialize theme
   }
 
   changePage(int index) {
@@ -107,7 +108,8 @@ class _TodoListState extends State<TodoList> {
               actions: [
                 TextButton(
                     style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).primaryColor),
+                        backgroundColor: HexColor('#0057FF'),
+                        foregroundColor: Colors.white),
                     onPressed: () =>
                         Navigator.of(context).pop(_textFieldController.text),
                     child: Text(
@@ -117,10 +119,19 @@ class _TodoListState extends State<TodoList> {
             ));
   }
 
+  void _scrollDown() {
+    scrollController.animateTo(
+      scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 1500),
+      curve: Curves.fastOutSlowIn,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var _todoTask = context.watch<DataProvider>().todoTasks;
     var _doneTask = context.watch<DataProvider>().doneTasks;
+    String appBarHeaderText = _selectedIndex == 0 ? "Todo List" : "Done List";
 
     return Scaffold(
       appBar: AppBar(
@@ -131,20 +142,14 @@ class _TodoListState extends State<TodoList> {
               doneTask: _doneTask,
               callback: () {
                 dataContext.cleanDoneTask(context: context);
-
-                setState(() {
-                  _doneTask = [];
-                });
-
                 dataContext.showSnackBar(
                     context: context, message: 'Successfully Clean Done Task');
-                // close pop menu
               }),
         ],
         centerTitle: true,
-        title: const Text(
-          'Todo List',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          appBarHeaderText,
+          style: const TextStyle(color: Colors.white),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -168,6 +173,7 @@ class _TodoListState extends State<TodoList> {
                   _inputText = value;
                 });
                 dataContext.addTask(context: context, value: _inputText);
+                _scrollDown();
               })
           : Container(),
       backgroundColor: Theme.of(context).colorScheme.background,
@@ -178,6 +184,7 @@ class _TodoListState extends State<TodoList> {
         controller: _controller,
         children: [
           ReorderableListView.builder(
+              scrollController: scrollController,
               onReorder: (oldIndex, newIndex) async => dataContext.reOrderItem(
                   oldIndex: oldIndex, newIndex: newIndex),
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
@@ -187,8 +194,8 @@ class _TodoListState extends State<TodoList> {
                   key: ValueKey(index),
                   opacity: 1.0,
                   isHighlight: _todoTask[index][0],
-                  child: XGestureDetector(
-                    onDoubleTap: (e) => dataContext.setAsSpecial(
+                  child: GestureDetector(
+                    onDoubleTap: () => dataContext.setAsSpecial(
                         index: index, context: context),
                     child: ListTile(
                       dense: true,
@@ -204,24 +211,35 @@ class _TodoListState extends State<TodoList> {
                       trailing: Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          CustomButton(
-                            callback: () => dataContext.completeTask(
+                          Listener(
+                            onPointerDown: (event) => dataContext.completeTask(
                               context: context,
                               completedIndex: index,
                             ),
-                            iconData: Icons.done,
+                            child: CustomButton(
+                              callback: () {},
+                              iconData: Icons.done,
+                            ),
                           ),
-                          PopupMenuButton(
-                              shadowColor: Colors.transparent,
-                              splashRadius: 20,
-                              color: HexColor('#040934').withAlpha(185),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              icon: const Icon(
-                                Icons.more_vert,
-                                color: Colors.white,
-                              ),
-                              itemBuilder: (BuildContext context) => [
+                          Listener(
+                            onPointerUp: (e) async {
+                              final position = e.position;
+                              final width = MediaQuery.of(context).size.width;
+                              final height = MediaQuery.of(context).size.height;
+                              showMenu(
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(10.0),
+                                    ),
+                                  ),
+                                  color: HexColor('#040934'),
+                                  context: context,
+                                  position: RelativeRect.fromLTRB(
+                                      position.dx,
+                                      position.dy,
+                                      width - position.dx,
+                                      height - position.dy),
+                                  items: [
                                     PopupMenuItem(
 
                                         /// Solution of this
@@ -248,7 +266,14 @@ class _TodoListState extends State<TodoList> {
                                         child: const CustomPopUpInside(
                                             text: 'Delete',
                                             iconData: Icons.delete))
-                                  ])
+                                  ]);
+                            },
+                            child: IconButton(
+                              color: Colors.white,
+                              icon: const Icon(Icons.more_vert),
+                              onPressed: () {},
+                            ),
+                          )
                         ],
                       ),
                     ),
