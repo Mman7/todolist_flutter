@@ -6,7 +6,6 @@ class DataProvider with ChangeNotifier {
   List<dynamic> _todoTasks = [];
   List<dynamic> _doneTasks = [];
   dynamic prefs;
-
   get todoTasks => _todoTasks;
   get doneTasks => _doneTasks;
 
@@ -30,13 +29,14 @@ class DataProvider with ChangeNotifier {
   }
 
   addTask({required BuildContext context, required value}) async {
-    _todoTasks.insert(0, ["false", value]);
+    _todoTasks.add(["false", value]);
     saveData('todo', _todoTasks);
     showSnackBar(context: context, message: 'Successfully Added');
     notifyListeners();
   }
 
   Future setAsSpecial({required index, required context}) async {
+    if (index == null) return;
     var value = json.decode(_todoTasks[index][0]);
     _todoTasks[index][0] = '${!value}';
     saveData('todo', _todoTasks);
@@ -50,7 +50,7 @@ class DataProvider with ChangeNotifier {
         duration: const Duration(milliseconds: 800),
         content: Text(
           message,
-          style: TextStyle(color: Colors.white),
+          style: const TextStyle(color: Colors.white),
         )));
   }
 
@@ -101,8 +101,7 @@ class DataProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<List> reOrderItem(
-      {required int oldIndex, required int newIndex}) async {
+  reOrderItem({required int oldIndex, required int newIndex}) async {
     // if the newIndex is larger than oldIndex newIndex will decrease 1
     // because reorder widget newIndex is larger than the expected value
     if (newIndex > oldIndex) {
@@ -111,6 +110,5 @@ class DataProvider with ChangeNotifier {
     var temp = _todoTasks.removeAt(oldIndex);
     _todoTasks.insert(newIndex, temp);
     saveData('todo', _todoTasks);
-    return _todoTasks;
   }
 }
