@@ -3,8 +3,8 @@ import 'package:hexcolor/hexcolor.dart';
 
 ThemeData darkTheme(BuildContext context) {
   return ThemeData(
-    canvasColor: HexColor('#1C92FF').withAlpha(150),
-    shadowColor: HexColor('#1C92FF').withAlpha(150),
+    canvasColor: Colors.white10,
+    shadowColor: HexColor('#1C92FF').withAlpha(125),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
         foregroundColor: Theme.of(context).secondaryHeaderColor,
         backgroundColor: HexColor('#00D1FF')),
@@ -13,9 +13,6 @@ ThemeData darkTheme(BuildContext context) {
         backgroundColor: const Color.fromARGB(255, 39, 39, 39),
         titleTextStyle:
             TextStyle(color: Theme.of(context).colorScheme.secondary)),
-    popupMenuTheme: PopupMenuThemeData(
-      color: Colors.black.withAlpha(1000),
-    ),
     appBarTheme: AppBarTheme(backgroundColor: HexColor('#040934')),
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: Colors.white, fontSize: 20),
