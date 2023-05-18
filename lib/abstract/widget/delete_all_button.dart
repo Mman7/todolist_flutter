@@ -5,8 +5,9 @@ Widget deleteAllButton({selectedIndex, context, doneTask, callback}) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 13.5, vertical: 0),
     child: IconButton(
+      splashColor: Colors.white,
       icon: Icon(Icons.delete_forever,
-          size: 40, color: Theme.of(context).secondaryHeaderColor),
+          size: 40, color: Theme.of(context).primaryColor),
       onPressed: () => showDialog(
           context: context,
           builder: (BuildContext context) => AlertDialog(
