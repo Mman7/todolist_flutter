@@ -2,17 +2,9 @@
 
 # simple_todo
 
-This is a very simplify project that i make for myself.
-
-# Package include
-- hexcolor: ^2.0.5
-- shared_preferences: ^2.0.9
-- provider: ^6.0.2
-- tinycolor: ^1.0.3
+Here is a really simple project made for myself
 
 ## App pic
 
-![1](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_1.png)
-
-![second pic](https://raw.githubusercontent.com/Mman7/todolist_flutter/main/assets/showcase/Screenshot_2.png)
+![1](https://github.com/Mman7/todolist_flutter/assets/70054123/ff40e62b-90dd-4555-b52c-4b507cafde8c)$~~~~~~~~~$ ![second pic](https://github.com/Mman7/todolist_flutter/assets/70054123/5498b6cc-cf9b-4bc5-b75f-ec34e479f861)
 
