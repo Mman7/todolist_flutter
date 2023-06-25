@@ -50,6 +50,8 @@ class _TodoListState extends State<TodoList> {
   String? _inputText;
   int _selectedIndex = 0;
   final ScrollController scrollController = ScrollController();
+  Offset completeButtonPos = Offset(0, 0);
+  Offset optionsButtonPos = Offset(0, 0);
 
   @override
   void dispose() {
@@ -212,18 +214,35 @@ class _TodoListState extends State<TodoList> {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Listener(
-                            onPointerDown: (event) => dataContext.completeTask(
-                              context: context,
-                              completedIndex: index,
-                            ),
+                            onPointerDown: (event) {
+                              final pos = event.position;
+                              setState(() {
+                                completeButtonPos = pos;
+                              });
+                            },
+                            onPointerUp: (event) {
+                              final pos = event.position;
+                              if (completeButtonPos != pos) return;
+                              dataContext.completeTask(
+                                context: context,
+                                completedIndex: index,
+                              );
+                            },
                             child: CustomButton(
                               callback: () {},
                               iconData: Icons.done,
                             ),
                           ),
                           Listener(
+                            onPointerDown: (event) {
+                              final pos = event.position;
+                              setState(() {
+                                optionsButtonPos = pos;
+                              });
+                            },
                             onPointerUp: (e) async {
                               final position = e.position;
+                              if (optionsButtonPos != position) return;
                               final width = MediaQuery.of(context).size.width;
                               final height = MediaQuery.of(context).size.height;
                               showMenu(
