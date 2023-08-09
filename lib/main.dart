@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 
@@ -7,8 +5,6 @@ import 'package:simple_todo/abstract/widget/delete_all_button.dart';
 import 'package:simple_todo/abstract/widget/done_task_list.dart';
 import 'abstract/theme/theme.dart';
 import 'abstract/widget/custom_floating_button.dart';
-import 'abstract/widget/custom_pop_up_inside_layout.dart';
-import 'abstract/widget/custom_button.dart';
 import 'abstract/widget/todo_item.dart';
 
 import 'package:provider/provider.dart';
@@ -50,8 +46,8 @@ class _TodoListState extends State<TodoList> {
   String? _inputText;
   int _selectedIndex = 0;
   final ScrollController scrollController = ScrollController();
-  Offset completeButtonPos = Offset(0, 0);
-  Offset optionsButtonPos = Offset(0, 0);
+  Offset completeButtonPos = const Offset(0, 0);
+  Offset optionsButtonPos = const Offset(0, 0);
 
   @override
   void dispose() {
@@ -72,20 +68,6 @@ class _TodoListState extends State<TodoList> {
       _selectedIndex = index;
       _controller.jumpToPage(index);
     });
-  }
-
-  editTask(int index) async {
-    final _todoTask = dataContext.todoTasks;
-    _textFieldController.text = _todoTask[index][1];
-    final text = await openDialog('Edit Task', 'Edit');
-    if (text == null) return;
-    setState(() {
-      _todoTask[index][1] = text;
-    });
-    _textFieldController.text = '';
-    dataContext.saveData('todo', _todoTask);
-    dataContext.showSnackBar(context: context, message: 'Successfully Edited');
-    setState(() {});
   }
 
   openDialog(String _title, String _buttonText) {
@@ -124,7 +106,7 @@ class _TodoListState extends State<TodoList> {
   void _scrollDown() {
     scrollController.animateTo(
       scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 500),
       curve: Curves.fastOutSlowIn,
     );
   }
@@ -193,111 +175,12 @@ class _TodoListState extends State<TodoList> {
               itemCount: _todoTask.length,
               itemBuilder: (context, index) {
                 return TodoItem(
-                  key: ValueKey(index),
-                  opacity: 1.0,
-                  isHighlight: _todoTask[index][0],
-                  child: GestureDetector(
-                    onDoubleTap: () => dataContext.setAsSpecial(
-                        index: index, context: context),
-                    child: ListTile(
-                      dense: true,
-                      title: Text(
-                        _todoTask[index][1],
-                        style: TextStyle(
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
-                            fontSize: Theme.of(context)
-                                .textTheme
-                                .bodyLarge
-                                ?.fontSize),
-                      ),
-                      trailing: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Listener(
-                            onPointerDown: (event) {
-                              final pos = event.position;
-                              setState(() {
-                                completeButtonPos = pos;
-                              });
-                            },
-                            onPointerUp: (event) {
-                              final pos = event.position;
-                              if (completeButtonPos != pos) return;
-                              dataContext.completeTask(
-                                context: context,
-                                completedIndex: index,
-                              );
-                            },
-                            child: CustomButton(
-                              callback: () {},
-                              iconData: Icons.done,
-                            ),
-                          ),
-                          Listener(
-                            onPointerDown: (event) {
-                              final pos = event.position;
-                              setState(() {
-                                optionsButtonPos = pos;
-                              });
-                            },
-                            onPointerUp: (e) async {
-                              final position = e.position;
-                              if (optionsButtonPos != position) return;
-                              final width = MediaQuery.of(context).size.width;
-                              final height = MediaQuery.of(context).size.height;
-                              showMenu(
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(10.0),
-                                    ),
-                                  ),
-                                  color: HexColor('#040934'),
-                                  context: context,
-                                  position: RelativeRect.fromLTRB(
-                                      position.dx,
-                                      position.dy,
-                                      width - position.dx,
-                                      height - position.dy),
-                                  items: [
-                                    PopupMenuItem(
-
-                                        /// Solution of this
-                                        /// https://stackoverflow.com/questions/69939559/showdialog-bug-dialog-isnt-triggered-from-popupmenubutton-in-flutter
-                                        onTap: () {
-                                          Future.delayed(
-                                              const Duration(seconds: 0),
-                                              () => editTask(index));
-                                        },
-                                        child: const CustomPopUpInside(
-                                          text: 'Edit',
-                                          iconData: Icons.edit,
-                                        )),
-                                    PopupMenuItem(
-                                        onTap: () {
-                                          dataContext.deleteTask(
-                                            databasename: 'todo',
-                                            list: _todoTask,
-                                            removeIndex: index,
-                                            context: context,
-                                          );
-                                          setState(() {});
-                                        },
-                                        child: const CustomPopUpInside(
-                                            text: 'Delete',
-                                            iconData: Icons.delete))
-                                  ]);
-                            },
-                            child: IconButton(
-                              color: Colors.white,
-                              icon: const Icon(Icons.more_vert),
-                              onPressed: () {},
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                );
+                    isTodoTask: true,
+                    key: ValueKey(index),
+                    index: index,
+                    opacity: 1.0,
+                    isHighlight: _todoTask[index][0],
+                    title: _todoTask[index][1]);
               }),
           const DoneTaskList(),
         ],
