@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class DataProvider with ChangeNotifier {
   List<dynamic> _todoTasks = [];
   List<dynamic> _doneTasks = [];
+  dynamic buttonPos;
   dynamic prefs;
   get todoTasks => _todoTasks;
   get doneTasks => _doneTasks;
@@ -15,6 +16,8 @@ class DataProvider with ChangeNotifier {
     _doneTasks = await getData(dataBaseName: 'done');
     notifyListeners();
   }
+
+  updatePos(Offset offset) => buttonPos = offset;
 
   void deleteTask(
       {required List list,
@@ -40,7 +43,7 @@ class DataProvider with ChangeNotifier {
     var value = json.decode(_todoTasks[index][0]);
     _todoTasks[index][0] = '${!value}';
     saveData('todo', _todoTasks);
-    showSnackBar(context: context, message: 'Successfully Set As Special');
+    showSnackBar(context: context, message: 'Successfully Highlighted');
     notifyListeners();
   }
 
@@ -110,5 +113,9 @@ class DataProvider with ChangeNotifier {
     var temp = _todoTasks.removeAt(oldIndex);
     _todoTasks.insert(newIndex, temp);
     saveData('todo', _todoTasks);
+  }
+
+  updateValue() {
+    notifyListeners();
   }
 }
