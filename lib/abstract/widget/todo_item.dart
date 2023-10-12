@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:provider/provider.dart';
@@ -177,28 +179,31 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
   openDialog(String _title, String _buttonText) {
     return showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-              shadowColor: HexColor('#1C92FF').withAlpha(100),
-              backgroundColor: HexColor('#040934'),
-              title: Text(
-                _title,
+        builder: (context) => BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: AlertDialog(
+                shadowColor: HexColor('#1C92FF').withAlpha(100),
+                backgroundColor: HexColor('#040934'),
+                title: Text(
+                  _title,
+                ),
+                content: TextField(
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  cursorColor: Colors.white,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white),
+                  controller: _textFieldController,
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(_textFieldController.text),
+                      child: Text(
+                        _buttonText,
+                      ))
+                ],
               ),
-              content: TextField(
-                autocorrect: false,
-                enableSuggestions: false,
-                cursorColor: Colors.white,
-                autofocus: true,
-                style: const TextStyle(color: Colors.white),
-                controller: _textFieldController,
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () =>
-                        Navigator.of(context).pop(_textFieldController.text),
-                    child: Text(
-                      _buttonText,
-                    ))
-              ],
             ));
   }
 
