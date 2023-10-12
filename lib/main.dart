@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hexcolor/hexcolor.dart';
 
 import 'package:simple_todo/abstract/widget/delete_all_button.dart';
@@ -12,6 +15,12 @@ import 'abstract/providers/data_provider.dart';
 //build command: flutter build apk --split-per-abi --no-shrink --no-sound-null-safety
 
 void main() {
+  /// Lock screen rotate
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+
+  ///
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider<DataProvider>(create: (_) => DataProvider())
   ], child: const MyApp()));
@@ -46,8 +55,6 @@ class _TodoListState extends State<TodoList> {
   String? _inputText;
   int _selectedIndex = 0;
   final ScrollController scrollController = ScrollController();
-  Offset completeButtonPos = const Offset(0, 0);
-  Offset optionsButtonPos = const Offset(0, 0);
 
   @override
   void dispose() {
@@ -73,33 +80,31 @@ class _TodoListState extends State<TodoList> {
   openDialog(String _title, String _buttonText) {
     return showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-              shadowColor: HexColor('#1C92FF').withAlpha(100),
-              backgroundColor: HexColor('#040934'),
-              title: Text(
-                _title,
-                style: TextStyle(
-                    fontWeight:
-                        Theme.of(context).textTheme.bodyLarge?.fontWeight,
-                    fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize),
+        builder: (context) => BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: AlertDialog(
+                shadowColor: HexColor('#1C92FF').withAlpha(100),
+                backgroundColor: HexColor('#040934'),
+                title: Text(
+                  _title,
+                ),
+                content: TextField(
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  cursorColor: Colors.white,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white),
+                  controller: _textFieldController,
+                ),
+                actions: [
+                  TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(_textFieldController.text),
+                      child: Text(
+                        _buttonText,
+                      ))
+                ],
               ),
-              content: TextField(
-                cursorColor: Colors.white,
-                autofocus: true,
-                style: const TextStyle(color: Colors.white),
-                controller: _textFieldController,
-              ),
-              actions: [
-                TextButton(
-                    style: TextButton.styleFrom(
-                        backgroundColor: HexColor('#0057FF'),
-                        foregroundColor: Colors.white),
-                    onPressed: () =>
-                        Navigator.of(context).pop(_textFieldController.text),
-                    child: Text(
-                      _buttonText,
-                    ))
-              ],
             ));
   }
 
@@ -152,7 +157,7 @@ class _TodoListState extends State<TodoList> {
               onPress: () async {
                 _textFieldController.text = '';
                 String? value = await openDialog('Todo Task', 'Add');
-                if (value == null) return;
+                if (value == null || value == '') return;
                 setState(() {
                   _inputText = value;
                 });
