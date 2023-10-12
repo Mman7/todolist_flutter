@@ -36,11 +36,20 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
 
-  late AnimationController _slideAniController;
-  late Animation<Offset> _slideAniAnimation;
+  late AnimationController _completedAniController;
+  late Animation<Offset> _completedAnimation;
 
-  late AnimationController _scaleAniController;
-  late Animation<double> _scaleAniAnimation;
+  late AnimationController _deleteAniController;
+  late Animation<double> _deleteAnimation;
+
+  dynamic isIgnore = false;
+
+  /// This feature is to prevent users from deleting items too quickly resulting in deleting items twice.
+  setIgnore({required bool value}) {
+    setState(() {
+      isIgnore = value;
+    });
+  }
 
   @override
   void initState() {
@@ -48,16 +57,16 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
     _textFieldController = TextEditingController();
     dataContext = context.read<DataProvider>();
 
-    _scaleAniController = AnimationController(
+    _deleteAniController = AnimationController(
       duration: const Duration(milliseconds: 250),
       vsync: this,
     );
 
-    _scaleAniAnimation = Tween(begin: 1.0, end: 0.0).animate(
-        CurvedAnimation(parent: _scaleAniController, curve: Curves.easeIn));
+    _deleteAnimation = Tween(begin: 1.0, end: 0.0).animate(
+        CurvedAnimation(parent: _deleteAniController, curve: Curves.easeIn));
 
     slideController = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 350),
       vsync: this,
     )..forward();
     slideAnimation = Tween<Offset>(
@@ -68,15 +77,15 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
       curve: Curves.fastEaseInToSlowEaseOut,
     ));
 
-    _slideAniController = AnimationController(
+    _completedAniController = AnimationController(
       duration: const Duration(milliseconds: 0),
       vsync: this,
     )..forward();
-    _slideAniAnimation = Tween<Offset>(
+    _completedAnimation = Tween<Offset>(
       begin: const Offset(0.0, 0.0),
       end: const Offset(0.0, 0.0),
     ).animate(CurvedAnimation(
-      parent: _slideAniController,
+      parent: _completedAniController,
       curve: Curves.fastEaseInToSlowEaseOut,
     ));
 
@@ -96,33 +105,47 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
     );
   }
 
-  startScaleAnimation({callback}) {
-    _scaleAniController.forward();
-    _scaleAniAnimation.addStatusListener((status) {
+  startDeleteAnimation({callback}) {
+    setIgnore(value: true);
+    // start animation
+    _deleteAniController.forward();
+    _deleteAnimation.addStatusListener((status) {
+      // check if animation is end, if so execute callback
       if (status == AnimationStatus.completed) {
-        _scaleAniController.reset();
         callback();
+        _deleteAniController.reset();
+        setIgnore(value: false);
       }
     });
   }
 
-  startSlideAnimation({value, callback}) {
-    setState(() {});
-    _slideAniController = AnimationController(
+  /// [slideDirection] can only be either "left" or "right"
+  void _completedTodoAnimation({String? slideDirection, callback}) {
+    if (slideDirection != 'left' && slideDirection != 'right') {
+      throw ArgumentError('slideDirection can only be either left or right');
+    }
+    double slideDirectToValue = 0;
+    if (slideDirection == 'right') slideDirectToValue = 1.0;
+    if (slideDirection == 'left') slideDirectToValue = -1.0;
+
+    setIgnore(value: true);
+
+    _completedAniController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     )..forward();
-    _slideAniAnimation = Tween<Offset>(
+    _completedAnimation = Tween<Offset>(
       begin: const Offset(0.0, 0.0),
-      end: Offset(value, 0.0),
+      end: Offset(slideDirectToValue, 0.0),
     ).animate(CurvedAnimation(
-      parent: _slideAniController,
+      parent: _completedAniController,
       curve: Curves.fastEaseInToSlowEaseOut,
     ))
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          _slideAniController.reset();
+          _completedAniController.reset();
           callback();
+          setIgnore(value: false);
         }
       });
   }
@@ -132,8 +155,8 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
     slideController.dispose();
     _scaleController.dispose();
     _textFieldController.dispose();
-    _slideAniController.dispose();
-    _scaleAniController.dispose();
+    _completedAniController.dispose();
+    _deleteAniController.dispose();
     super.dispose();
   }
 
@@ -159,12 +182,10 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
               backgroundColor: HexColor('#040934'),
               title: Text(
                 _title,
-                style: TextStyle(
-                    fontWeight:
-                        Theme.of(context).textTheme.bodyLarge?.fontWeight,
-                    fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize),
               ),
               content: TextField(
+                autocorrect: false,
+                enableSuggestions: false,
                 cursorColor: Colors.white,
                 autofocus: true,
                 style: const TextStyle(color: Colors.white),
@@ -172,9 +193,6 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
               ),
               actions: [
                 TextButton(
-                    style: TextButton.styleFrom(
-                        backgroundColor: HexColor('#0057FF'),
-                        foregroundColor: Colors.white),
                     onPressed: () =>
                         Navigator.of(context).pop(_textFieldController.text),
                     child: Text(
@@ -211,7 +229,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
         ),
         PopupMenuItem(
           onTap: () {
-            startScaleAnimation(
+            startDeleteAnimation(
                 callback: () => dataContext.deleteTask(
                     list: dataContext.todoTasks,
                     removeIndex: widget.index,
@@ -241,13 +259,13 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
     var secondIcon = widget.isTodoTask ? Icons.more_vert : Icons.delete;
 
     return ScaleTransition(
-      scale: _scaleAniAnimation,
+      scale: _deleteAnimation,
       child: SlideTransition(
         position: slideAnimation,
         child: ScaleTransition(
           scale: _scaleAnimation,
           child: SlideTransition(
-            position: _slideAniAnimation,
+            position: _completedAnimation,
             child: Opacity(
               opacity: widget.opacity,
               child: Padding(
@@ -272,58 +290,63 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                     ],
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: GestureDetector(
-                    onDoubleTap: () {
-                      if (widget.isTodoTask) {
-                        dataContext.setAsSpecial(
-                            index: widget.index, context: context);
-                      }
-                    },
-                    child: ListTile(
-                      title: Text(
-                        widget.title,
-                        style: TextStyle(
-                            decoration: textStyle,
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
-                            fontSize: Theme.of(context)
-                                .textTheme
-                                .bodyLarge
-                                ?.fontSize),
-                      ),
-                      trailing: Wrap(
-                        children: [
-                          CustomButton(
-                              callback: () {
-                                if (widget.isTodoTask) {
-                                  startSlideAnimation(
-                                      value: 1.0,
-                                      callback: () => dataContext.completeTask(
-                                          context: context,
-                                          completedIndex: widget.index));
-                                } else {
-                                  startSlideAnimation(
-                                      value: -1.0,
-                                      callback: () => dataContext.returnTask(
-                                          context: context,
-                                          returnItemIndex: widget.index));
-                                }
-                              },
-                              iconData: firstIcon),
-                          CustomButton(
-                              callback: () {
-                                if (widget.isTodoTask) {
-                                  _showPopupMenu();
-                                } else {
-                                  startScaleAnimation(
-                                      callback: () => dataContext.deleteTask(
-                                          list: dataContext.doneTasks,
-                                          removeIndex: widget.index,
-                                          databasename: 'done',
-                                          context: context));
-                                }
-                              },
-                              iconData: secondIcon),
-                        ],
+                  child: IgnorePointer(
+                    ignoring: isIgnore,
+                    child: GestureDetector(
+                      onDoubleTap: () {
+                        if (widget.isTodoTask) {
+                          dataContext.setAsSpecial(
+                              index: widget.index, context: context);
+                        }
+                      },
+                      child: ListTile(
+                        title: Text(
+                          widget.title,
+                          style: TextStyle(
+                              decoration: textStyle,
+                              color:
+                                  Theme.of(context).textTheme.bodyLarge?.color,
+                              fontSize: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.fontSize),
+                        ),
+                        trailing: Wrap(
+                          children: [
+                            CustomButton(
+                                callback: () {
+                                  if (widget.isTodoTask) {
+                                    _completedTodoAnimation(
+                                        slideDirection: 'right',
+                                        callback: () =>
+                                            dataContext.completeTask(
+                                                context: context,
+                                                completedIndex: widget.index));
+                                  } else {
+                                    _completedTodoAnimation(
+                                        slideDirection: 'left',
+                                        callback: () => dataContext.returnTask(
+                                            context: context,
+                                            returnItemIndex: widget.index));
+                                  }
+                                },
+                                iconData: firstIcon),
+                            CustomButton(
+                                callback: () {
+                                  if (widget.isTodoTask) {
+                                    _showPopupMenu();
+                                  } else {
+                                    startDeleteAnimation(
+                                        callback: () => dataContext.deleteTask(
+                                            list: dataContext.doneTasks,
+                                            removeIndex: widget.index,
+                                            databasename: 'done',
+                                            context: context));
+                                  }
+                                },
+                                iconData: secondIcon),
+                          ],
+                        ),
                       ),
                     ),
                   ),
