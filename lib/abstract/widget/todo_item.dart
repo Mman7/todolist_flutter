@@ -252,11 +252,11 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final backgroundColour = widget.isHighlight == 'true'
-        ? HexColor('#1C92FF') // blue
+        ? HexColor('#FFA91C') // blue
         : HexColor('#0057FF'); // Darker blue
 
     final shadowColor =
-        widget.isHighlight == 'true' ? HexColor('#1C92FF') : Colors.transparent;
+        widget.isHighlight == 'true' ? HexColor('#FFA91C') : Colors.transparent;
 
     final textStyle =
         widget.isTodoTask ? TextDecoration.none : TextDecoration.lineThrough;
@@ -316,6 +316,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                                   .bodyLarge
                                   ?.fontSize),
                         ),
+                        contentPadding: EdgeInsets.only(left: 10),
                         trailing: Wrap(
                           children: [
                             CustomButton(
