@@ -90,7 +90,6 @@ class _TodoListState extends State<TodoList> {
                 ),
                 content: TextField(
                   autocorrect: false,
-                  enableSuggestions: false,
                   cursorColor: Colors.white,
                   autofocus: true,
                   style: const TextStyle(color: Colors.white),
