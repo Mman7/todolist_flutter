@@ -188,8 +188,6 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                   _title,
                 ),
                 content: TextField(
-                  autocorrect: false,
-                  enableSuggestions: false,
                   cursorColor: Colors.white,
                   autofocus: true,
                   style: const TextStyle(color: Colors.white),
