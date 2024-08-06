@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hexcolor/hexcolor.dart';
 
+import 'package:badges/badges.dart' as badges;
 import 'package:simple_todo/abstract/widget/delete_all_button.dart';
 import 'package:simple_todo/abstract/widget/done_task_list.dart';
 import 'abstract/theme/theme.dart';
@@ -141,9 +142,13 @@ class _TodoListState extends State<TodoList> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const [
+        items: [
           BottomNavigationBarItem(
-              icon: Icon(Icons.format_list_bulleted), label: 'Todo'),
+              icon: badges.Badge(
+                  badgeContent: Text('${_todoTask.length}'),
+                  badgeStyle: badges.BadgeStyle(badgeColor: Colors.blue),
+                  child: Icon(Icons.format_list_bulleted)),
+              label: 'Todo'),
           BottomNavigationBarItem(icon: Icon(Icons.done_all), label: 'Done')
         ],
         currentIndex: _selectedIndex,
