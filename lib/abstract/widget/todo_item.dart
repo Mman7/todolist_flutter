@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:provider/provider.dart';
+import 'package:simple_todo/abstract/localdatabase.dart';
 import 'package:simple_todo/abstract/widget/custom_button.dart';
 import 'package:simple_todo/abstract/widget/custom_pop_up_inside_layout.dart';
 
@@ -110,22 +111,15 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
   startDeleteAnimation({callback}) {
     setIgnore(value: true);
     // start animation
-    _deleteAniController.forward();
-    _deleteAnimation.addStatusListener((status) {
-      // check if animation is end, if so execute callback
-      if (status == AnimationStatus.completed) {
-        callback();
-        _deleteAniController.reset();
-        setIgnore(value: false);
-      }
+    _deleteAniController.forward().whenComplete(() {
+      callback();
+      _deleteAniController.reset();
     });
+    setIgnore(value: false);
   }
 
   /// [slideDirection] can only be either "left" or "right"
-  void _completedTodoAnimation({String? slideDirection, callback}) {
-    if (slideDirection != 'left' && slideDirection != 'right') {
-      throw ArgumentError('slideDirection can only be either left or right');
-    }
+  void _completedTodoAnimation({required String slideDirection, callback}) {
     double slideDirectToValue = 0;
     if (slideDirection == 'right') slideDirectToValue = 1.0;
     if (slideDirection == 'left') slideDirectToValue = -1.0;
@@ -171,9 +165,9 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
       _todoTask[index][1] = text;
     });
     _textFieldController.text = '';
-    dataContext.saveData('todo', _todoTask);
-    dataContext.showSnackBar(context: context, message: 'Successfully Edited');
+    Database.saveData(dataBaseList: DataList.todo, newList: _todoTask);
     dataContext.updateValue();
+    dataContext.showSnackBar(context: context, message: 'Successfully Edited');
   }
 
   openDialog(String _title, String _buttonText) {
@@ -205,7 +199,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
             ));
   }
 
-  void _showPopupMenu() async {
+  void _showPopupMenu(index) async {
     dynamic offset = dataContext.buttonPos;
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
@@ -231,13 +225,10 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
           child: const CustomPopUpInside(text: 'Edit', iconData: Icons.edit),
         ),
         PopupMenuItem(
-          onTap: () {
+          onTap: () async {
             startDeleteAnimation(
-                callback: () => dataContext.deleteTask(
-                    list: dataContext.todoTasks,
-                    removeIndex: widget.index,
-                    databasename: 'todo',
-                    context: context));
+                callback: () => dataContext.removeItem(
+                    datalist: DataList.todo, index: index));
           },
           child:
               const CustomPopUpInside(text: 'Delete', iconData: Icons.delete),
@@ -314,7 +305,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                                   .bodyLarge
                                   ?.fontSize),
                         ),
-                        contentPadding: EdgeInsets.only(left: 10),
+                        contentPadding: const EdgeInsets.only(left: 10),
                         trailing: Wrap(
                           children: [
                             CustomButton(
@@ -323,29 +314,30 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                                     _completedTodoAnimation(
                                         slideDirection: 'right',
                                         callback: () =>
-                                            dataContext.completeTask(
+                                            dataContext.completeToggle(
                                                 context: context,
-                                                completedIndex: widget.index));
+                                                datalist: DataList.todo,
+                                                index: widget.index));
                                   } else {
                                     _completedTodoAnimation(
                                         slideDirection: 'left',
-                                        callback: () => dataContext.returnTask(
-                                            context: context,
-                                            returnItemIndex: widget.index));
+                                        callback: () =>
+                                            dataContext.completeToggle(
+                                                context: context,
+                                                datalist: DataList.done,
+                                                index: widget.index));
                                   }
                                 },
                                 iconData: firstIcon),
                             CustomButton(
                                 callback: () {
                                   if (widget.isTodoTask) {
-                                    _showPopupMenu();
+                                    _showPopupMenu(widget.index);
                                   } else {
                                     startDeleteAnimation(
-                                        callback: () => dataContext.deleteTask(
-                                            list: dataContext.doneTasks,
-                                            removeIndex: widget.index,
-                                            databasename: 'done',
-                                            context: context));
+                                        callback: () => dataContext.removeItem(
+                                            datalist: DataList.done,
+                                            index: widget.index));
                                   }
                                 },
                                 iconData: secondIcon),

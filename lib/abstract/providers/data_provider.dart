@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simple_todo/abstract/localdatabase.dart';
 
 class DataProvider with ChangeNotifier {
   List<dynamic> _todoTasks = [];
@@ -9,41 +11,28 @@ class DataProvider with ChangeNotifier {
   dynamic prefs;
   get todoTasks => _todoTasks;
   get doneTasks => _doneTasks;
-
   intializeData() async {
     prefs = await SharedPreferences.getInstance();
-    _todoTasks = await getData(dataBaseName: 'todo');
-    _doneTasks = await getData(dataBaseName: 'done');
+    _todoTasks = await Database.getData(dataBaseName: 'todo');
+    _doneTasks = await Database.getData(dataBaseName: 'done');
     notifyListeners();
   }
 
   updatePos(Offset offset) => buttonPos = offset;
 
-  void deleteTask(
-      {required List list,
-      required int removeIndex,
-      required String databasename,
-      required BuildContext context,
-      callback}) async {
-    list.removeAt(removeIndex);
-    saveData(databasename, list);
-    showSnackBar(context: context, message: 'Successfully Deleted');
-    notifyListeners();
-  }
-
   addTask({required BuildContext context, required value}) async {
     _todoTasks.add(["false", value]);
-    saveData('todo', _todoTasks);
+    Database.saveData(dataBaseList: DataList.todo, newList: todoTasks);
     showSnackBar(context: context, message: 'Successfully Added');
     notifyListeners();
   }
 
   Future setAsSpecial({required index, required context}) async {
     if (index == null) return;
-    var value = json.decode(_todoTasks[index][0]);
+    bool value = json.decode(_todoTasks[index][0]);
     _todoTasks[index][0] = '${!value}';
-    saveData('todo', _todoTasks);
     showSnackBar(context: context, message: 'Successfully Highlighted');
+    Database.saveData(dataBaseList: DataList.todo, newList: _todoTasks);
     notifyListeners();
   }
 
@@ -57,50 +46,38 @@ class DataProvider with ChangeNotifier {
         )));
   }
 
-  returnTask({
-    required BuildContext context,
-    required int returnItemIndex,
-  }) async {
-    final returnItem = _doneTasks[returnItemIndex];
-    _todoTasks.add(returnItem);
-    _doneTasks.removeAt(returnItemIndex);
-    saveData('todo', _todoTasks);
-    saveData('done', _doneTasks);
-    showSnackBar(context: context, message: "Successfully Returned");
+  void completeToggle({
+    required String datalist,
+    required int index,
+    required context,
+  }) {
+    if (datalist == DataList.todo) {
+      todoTasks.removeAt(index);
+      Database.completeToggle(dataList: datalist, index: index);
+      showSnackBar(context: context, message: 'Successfully completed task');
+    } else {
+      doneTasks.removeAt(index);
+      Database.completeToggle(dataList: datalist, index: index);
+      showSnackBar(context: context, message: 'Successfully undo donetask');
+    }
+    intializeData();
     notifyListeners();
   }
 
-  completeTask({
-    required BuildContext context,
-    required int completedIndex,
-  }) {
-    final completedItem = _todoTasks[completedIndex];
-    _todoTasks.removeAt(completedIndex);
-    _doneTasks.insert(0, completedItem);
-    saveData('todo', _todoTasks);
-    saveData('done', _doneTasks);
-    showSnackBar(context: context, message: 'Successfully Completed');
+  void removeItem({required String datalist, required int index}) {
+    if (datalist == DataList.todo) {
+      Database.removeData(databaseName: datalist, index: index);
+    }
+    if (datalist == DataList.done) {
+      Database.removeData(databaseName: datalist, index: index);
+    }
+    intializeData();
     notifyListeners();
   }
 
-  saveData(String dataBaseName, List dataItemList) {
-    var data = json.encode(dataItemList);
-    prefs.setString(dataBaseName, data);
-  }
-
-  Future getData({required String dataBaseName}) async {
-    //* if it doesnt get any data return empty array
-    var rawData = prefs.getString(dataBaseName) ?? '[]';
-    List data = json.decode(rawData);
-    return data;
-  }
-
-  cleanDoneTask({
-    required BuildContext context,
-  }) {
+  void cleanDoneTask() {
     _doneTasks = [];
-    saveData('done', _doneTasks);
-    showSnackBar(context: context, message: 'Successfully Clean Done Task');
+    Database.cleanDoneTask();
     notifyListeners();
   }
 
@@ -112,7 +89,7 @@ class DataProvider with ChangeNotifier {
     }
     var temp = _todoTasks.removeAt(oldIndex);
     _todoTasks.insert(newIndex, temp);
-    saveData('todo', _todoTasks);
+    Database.saveData(dataBaseList: DataList.todo, newList: _todoTasks);
   }
 
   updateValue() {
