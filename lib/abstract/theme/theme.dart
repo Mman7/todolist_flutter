@@ -26,7 +26,7 @@ ThemeData darkTheme(BuildContext context) {
     ),
     colorScheme: const ColorScheme.dark().copyWith(
       primary: Colors.white,
-      background: HexColor(('#110630')),
+      surface: HexColor(('#110630')),
       brightness: Brightness.dark,
     ),
     primaryColor: HexColor('#0057FF'),

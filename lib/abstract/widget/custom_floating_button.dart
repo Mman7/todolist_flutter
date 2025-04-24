@@ -6,7 +6,7 @@ Widget customFloatingButton({required BuildContext context, required onPress}) {
     decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-              color: HexColor('#0085FF').withOpacity(0.65),
+              color: HexColor('#0085FF').withValues(alpha: 0.5),
               spreadRadius: 0.25,
               blurRadius: 20,
               offset: const Offset(0, 0))
