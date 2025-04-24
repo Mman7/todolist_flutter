@@ -119,7 +119,6 @@ class _TodoListState extends State<TodoList> {
   @override
   Widget build(BuildContext context) {
     var _todoTask = context.watch<DataProvider>().todoTasks;
-    var _doneTask = context.watch<DataProvider>().doneTasks;
     String appBarHeaderText = _selectedIndex == 0 ? "Todo List" : "Done List";
 
     return Scaffold(
@@ -128,9 +127,8 @@ class _TodoListState extends State<TodoList> {
           deleteAllButton(
               selectedIndex: _selectedIndex,
               context: context,
-              doneTask: _doneTask,
               callback: () {
-                dataContext.cleanDoneTask(context: context);
+                dataContext.cleanDoneTask();
                 dataContext.showSnackBar(
                     context: context, message: 'Successfully Clean Done Task');
               }),
@@ -146,10 +144,11 @@ class _TodoListState extends State<TodoList> {
           BottomNavigationBarItem(
               icon: badges.Badge(
                   badgeContent: Text('${_todoTask.length}'),
-                  badgeStyle: badges.BadgeStyle(badgeColor: Colors.blue),
-                  child: Icon(Icons.format_list_bulleted)),
+                  badgeStyle: const badges.BadgeStyle(badgeColor: Colors.blue),
+                  child: const Icon(Icons.format_list_bulleted)),
               label: 'Todo'),
-          BottomNavigationBarItem(icon: Icon(Icons.done_all), label: 'Done')
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.done_all), label: 'Done')
         ],
         currentIndex: _selectedIndex,
         onTap: changePage,
@@ -169,7 +168,7 @@ class _TodoListState extends State<TodoList> {
                 _scrollDown();
               })
           : Container(),
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: PageView(
         onPageChanged: (index) => setState(() {
           _selectedIndex = index;
