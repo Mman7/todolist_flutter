@@ -2,7 +2,7 @@
 
 # simple_todo
 
-Here is a really simple project made for myself
+Here is a really simple project built for myself
 
 ## App pic
 
