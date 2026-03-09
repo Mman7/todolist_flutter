@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:provider/provider.dart';
 import 'package:simple_todo/abstract/localdatabase.dart';
@@ -146,7 +147,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
   editTask(int index) async {
     final List<TodoData> _todoTask = dataContext.todoTasks;
     _textFieldController.text = _todoTask[index].title;
-    final String? text = await openDialog('Edit Task', 'Edit');
+    final String? text = await openDialog();
     if (text == null) return;
     setState(() {
       _todoTask[index].title = text;
@@ -160,7 +161,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
         message: 'Successfully Edited');
   }
 
-  openDialog(String _title, String _buttonText) {
+  openDialog() {
     return showDialog<String>(
         context: context,
         builder: (context) => BackdropFilter(
@@ -168,8 +169,8 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
               child: AlertDialog(
                 shadowColor: HexColor('#1C92FF').withAlpha(100),
                 backgroundColor: HexColor('#040934'),
-                title: Text(
-                  _title,
+                title: const Text(
+                  'Edit Task',
                 ),
                 content: TextField(
                   cursorColor: Colors.white,
@@ -181,15 +182,15 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                   TextButton(
                       onPressed: () =>
                           Navigator.of(context).pop(_textFieldController.text),
-                      child: Text(
-                        _buttonText,
-                      ))
+                      child: const Text(
+                        'Edit',
+                      )),
                 ],
               ),
             ));
   }
 
-  void _showPopupMenu(int index) async {
+  void _showPopupMenu(int index, String itemTitle) async {
     final dynamic offset = dataContext.buttonPos;
     final double width = MediaQuery.of(context).size.width;
     final double height = MediaQuery.of(context).size.height;
@@ -213,6 +214,16 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                 const Duration(seconds: 0), () => editTask(widget.index));
           },
           child: const CustomPopUpInside(text: 'Edit', iconData: Icons.edit),
+        ),
+        PopupMenuItem(
+          onTap: () async {
+            await Clipboard.setData(ClipboardData(text: itemTitle));
+            dataContext.showSnackBarFromMessenger(
+                messenger: ScaffoldMessenger.maybeOf(context),
+                backgroundColor: Theme.of(context).primaryColor,
+                message: 'Task Copied');
+          },
+          child: const CustomPopUpInside(text: 'Copy ', iconData: Icons.copy),
         ),
         PopupMenuItem(
           onTap: () async {
@@ -329,7 +340,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                             CustomButton(
                                 callback: () {
                                   if (widget.isTodoTask) {
-                                    _showPopupMenu(widget.index);
+                                    _showPopupMenu(widget.index, widget.title);
                                   } else {
                                     startDeleteAnimation(
                                         callback: () => dataContext.removeItem(
