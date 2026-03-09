@@ -1,55 +1,83 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simple_todo/model/todo_data.dart';
 
-class DataList {
-  static const String todo = 'todo';
-  static const String done = 'done';
+enum DatabaseName {
+  todo,
+  done,
 }
 
 class Database {
   static dynamic prefs;
-  static intializeData() async {
+  static Future<void> intializeData() async {
     prefs = await SharedPreferences.getInstance();
   }
 
-  static Future getData({required String dataBaseName}) async {
+  static Future<List<TodoData>> getData(
+      {required DatabaseName dataBaseName}) async {
     await intializeData();
-    //* if it doesnt get any data return empty list
-    var rawData = prefs.getString(dataBaseName) ?? '[]';
-    List data = json.decode(rawData);
-    return data;
+    // if it doesnt get any data return empty list
+    final String rawData = prefs.getString(dataBaseName.toString()) ?? '[]';
+    final List<dynamic> parsed = json.decode(rawData);
+
+    // Convert the dynamic list to a list of TodoData objects.
+    final List<TodoData> decoded = parsed
+        .whereType<Map>()
+        .map((item) => TodoData.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
+
+    return decoded;
   }
 
-  static saveData({newList, dataBaseList}) {
-    var data = json.encode(newList);
-    prefs.setString(dataBaseList, data);
+  static Future<void> saveData(
+      {required List<TodoData> newList,
+      required DatabaseName databaseName}) async {
+    await intializeData();
+    final String data =
+        json.encode(newList.map((item) => item.toJson()).toList());
+    await prefs.setString(databaseName.toString(), data);
   }
 
-  static removeData({required String databaseName, required int index}) async {
-    List list = await getData(dataBaseName: databaseName);
+  static Future<void> removeData(
+      {required DatabaseName databaseName, required int index}) async {
+    final List<TodoData> list = await getData(dataBaseName: databaseName);
     list.removeAt(index);
-    saveData(dataBaseList: databaseName, newList: list);
+    await saveData(databaseName: databaseName, newList: list);
   }
 
-  static completeToggle({dataList, index}) async {
-    List todoList = await getData(dataBaseName: DataList.todo);
-    List doneList = await getData(dataBaseName: DataList.done);
-    dynamic item;
-    if (dataList == DataList.todo) {
-      item = todoList[index];
-      todoList.removeAt(index);
-      doneList.add(item);
+  // Helper method to swap items between lists for complete toggle.
+  static _swapItem(
+      {required List todoList, required List doneList, required int index}) {
+    // Copy the item from the list
+    final item = todoList[index];
+    // remove it from the first list and add it to the second list
+    todoList.removeAt(index);
+    doneList.add(item);
+  }
+
+  static Future<void> completeToggle({
+    required DatabaseName dataList,
+    required int index,
+  }) async {
+    final List<TodoData> todoList =
+        await getData(dataBaseName: DatabaseName.todo);
+    final List<TodoData> doneList =
+        await getData(dataBaseName: DatabaseName.done);
+
+    if (dataList == DatabaseName.todo) {
+      _swapItem(todoList: todoList, doneList: doneList, index: index);
     }
-    if (dataList == DataList.done) {
-      item = doneList[index];
-      doneList.removeAt(index);
-      todoList.add(item);
+
+    if (dataList == DatabaseName.done) {
+      _swapItem(todoList: doneList, doneList: todoList, index: index);
     }
-    saveData(dataBaseList: DataList.todo, newList: todoList);
-    saveData(dataBaseList: DataList.done, newList: doneList);
+
+    await saveData(databaseName: DatabaseName.todo, newList: todoList);
+    await saveData(databaseName: DatabaseName.done, newList: doneList);
   }
 
   static cleanDoneTask() async {
-    SharedPreferences.getInstance().then((e) => e.remove(DataList.done));
+    SharedPreferences.getInstance()
+        .then((e) => e.remove(DatabaseName.done.toString()));
   }
 }

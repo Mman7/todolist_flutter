@@ -7,6 +7,7 @@ import 'package:hexcolor/hexcolor.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:simple_todo/abstract/widget/delete_all_button.dart';
 import 'package:simple_todo/abstract/widget/done_task_list.dart';
+import 'package:simple_todo/model/todo_data.dart';
 import 'abstract/theme/theme.dart';
 import 'abstract/widget/custom_floating_button.dart';
 import 'abstract/widget/todo_item.dart';
@@ -118,7 +119,7 @@ class _TodoListState extends State<TodoList> {
 
   @override
   Widget build(BuildContext context) {
-    var _todoTask = context.watch<DataProvider>().todoTasks;
+    List<TodoData> _todoTask = context.watch<DataProvider>().todoTasks;
     String appBarHeaderText = _selectedIndex == 0 ? "Todo List" : "Done List";
 
     return Scaffold(
@@ -129,8 +130,10 @@ class _TodoListState extends State<TodoList> {
               context: context,
               callback: () {
                 dataContext.cleanDoneTask();
-                dataContext.showSnackBar(
-                    context: context, message: 'Successfully Clean Done Task');
+                dataContext.showSnackBarFromMessenger(
+                    messenger: ScaffoldMessenger.maybeOf(context),
+                    backgroundColor: Theme.of(context).primaryColor,
+                    message: 'Successfully Clean Done Task');
               }),
         ],
         centerTitle: true,
@@ -187,8 +190,8 @@ class _TodoListState extends State<TodoList> {
                     key: ValueKey(index),
                     index: index,
                     opacity: 1.0,
-                    isHighlight: _todoTask[index][0],
-                    title: _todoTask[index][1]);
+                    isHighlight: _todoTask[index].isHighlight,
+                    title: _todoTask[index].title);
               }),
           const DoneTaskList(),
         ],

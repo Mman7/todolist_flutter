@@ -6,8 +6,11 @@ import 'package:provider/provider.dart';
 import 'package:simple_todo/abstract/localdatabase.dart';
 import 'package:simple_todo/abstract/widget/custom_button.dart';
 import 'package:simple_todo/abstract/widget/custom_pop_up_inside_layout.dart';
+import 'package:simple_todo/model/todo_data.dart';
 
 import '../providers/data_provider.dart';
+
+enum SlideDirection { left, right }
 
 class TodoItem extends StatefulWidget {
   const TodoItem(
@@ -22,7 +25,7 @@ class TodoItem extends StatefulWidget {
   final double opacity;
   final bool isTodoTask;
   final int index;
-  final String isHighlight;
+  final bool isHighlight;
   final String title;
 
   @override
@@ -36,16 +39,13 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
   late AnimationController slideController;
   late Animation<Offset> slideAnimation;
 
-  late AnimationController _scaleController;
-  late Animation<double> _scaleAnimation;
-
   late AnimationController _completedAniController;
   late Animation<Offset> _completedAnimation;
 
   late AnimationController _deleteAniController;
   late Animation<double> _deleteAnimation;
 
-  dynamic isIgnore = false;
+  bool isIgnore = false;
 
   /// This feature is to prevent users from deleting items too quickly resulting in deleting items twice.
   setIgnore({required bool value}) {
@@ -93,19 +93,6 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
     ));
 
     super.initState();
-
-    _scaleController = AnimationController(
-      duration: const Duration(
-        milliseconds: 900,
-      ),
-      vsync: this,
-      value: 0.1,
-    )..forward();
-
-    _scaleAnimation = CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.fastEaseInToSlowEaseOut,
-    );
   }
 
   startDeleteAnimation({callback}) {
@@ -119,10 +106,11 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
   }
 
   /// [slideDirection] can only be either "left" or "right"
-  void _completedTodoAnimation({required String slideDirection, callback}) {
+  void _completedTodoAnimation(
+      {required SlideDirection slideDirection, callback}) {
     double slideDirectToValue = 0;
-    if (slideDirection == 'right') slideDirectToValue = 1.0;
-    if (slideDirection == 'left') slideDirectToValue = -1.0;
+    if (slideDirection == SlideDirection.right) slideDirectToValue = 1.0;
+    if (slideDirection == SlideDirection.left) slideDirectToValue = -1.0;
 
     setIgnore(value: true);
 
@@ -149,7 +137,6 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
   @override
   void dispose() {
     slideController.dispose();
-    _scaleController.dispose();
     _textFieldController.dispose();
     _completedAniController.dispose();
     _deleteAniController.dispose();
@@ -157,21 +144,24 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
   }
 
   editTask(int index) async {
-    final _todoTask = dataContext.todoTasks;
-    _textFieldController.text = _todoTask[index][1];
-    final text = await openDialog('Edit Task', 'Edit');
+    final List<TodoData> _todoTask = dataContext.todoTasks;
+    _textFieldController.text = _todoTask[index].title;
+    final String? text = await openDialog('Edit Task', 'Edit');
     if (text == null) return;
     setState(() {
-      _todoTask[index][1] = text;
+      _todoTask[index].title = text;
     });
     _textFieldController.text = '';
-    Database.saveData(dataBaseList: DataList.todo, newList: _todoTask);
+    Database.saveData(databaseName: DatabaseName.todo, newList: _todoTask);
     dataContext.updateValue();
-    dataContext.showSnackBar(context: context, message: 'Successfully Edited');
+    dataContext.showSnackBarFromMessenger(
+        messenger: ScaffoldMessenger.maybeOf(context),
+        backgroundColor: Theme.of(context).primaryColor,
+        message: 'Successfully Edited');
   }
 
   openDialog(String _title, String _buttonText) {
-    return showDialog(
+    return showDialog<String>(
         context: context,
         builder: (context) => BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -199,10 +189,10 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
             ));
   }
 
-  void _showPopupMenu(index) async {
-    dynamic offset = dataContext.buttonPos;
-    final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
+  void _showPopupMenu(int index) async {
+    final dynamic offset = dataContext.buttonPos;
+    final double width = MediaQuery.of(context).size.width;
+    final double height = MediaQuery.of(context).size.height;
 
     await showMenu(
       color: HexColor('#040934'),
@@ -228,7 +218,9 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
           onTap: () async {
             startDeleteAnimation(
                 callback: () => dataContext.removeItem(
-                    datalist: DataList.todo, index: index));
+                    datalist: DatabaseName.todo,
+                    index: index,
+                    context: context));
           },
           child:
               const CustomPopUpInside(text: 'Delete', iconData: Icons.delete),
@@ -240,50 +232,57 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColour = widget.isHighlight == 'true'
-        ? HexColor('#FFA91C') // blue
-        : HexColor('#0057FF'); // Darker blue
+    final HexColor backgroundColour = widget.isHighlight
+        ? HexColor('#0057FF') // blue
+        : HexColor('#2d2a36'); // default color
 
-    final shadowColor =
-        widget.isHighlight == 'true' ? HexColor('#FFA91C') : Colors.transparent;
+    final Color shadowColor = widget.isHighlight
+        ? HexColor('#0057FF')
+        : HexColor('#0057FF').withAlpha(0);
 
-    final textStyle =
+    final TextDecoration textStyle =
         widget.isTodoTask ? TextDecoration.none : TextDecoration.lineThrough;
-    var firstIcon = widget.isTodoTask ? Icons.done : Icons.keyboard_return;
-    var secondIcon = widget.isTodoTask ? Icons.more_vert : Icons.delete;
+    final IconData firstIcon =
+        widget.isTodoTask ? Icons.done : Icons.keyboard_return;
+    final IconData secondIcon =
+        widget.isTodoTask ? Icons.more_vert : Icons.delete;
 
-    return ScaleTransition(
-      scale: _deleteAnimation,
+    //
+    return SlideTransition(
+      position: slideAnimation,
       child: SlideTransition(
-        position: slideAnimation,
+        position: _completedAnimation,
         child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: SlideTransition(
-            position: _completedAnimation,
-            child: Opacity(
-              opacity: widget.opacity,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: backgroundColour,
-                    boxShadow: [
-                      BoxShadow(
-                          color: shadowColor,
-                          spreadRadius: 0,
-                          blurRadius: 45,
-                          offset: const Offset(0, 0)),
-                      BoxShadow(
-                          color: shadowColor,
-                          spreadRadius: 0,
-                          blurRadius: 10,
-                          offset: const Offset(0, 0))
-                    ],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+          scale: _deleteAnimation,
+          child: Opacity(
+            opacity: widget.opacity,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: backgroundColour,
+                  boxShadow: [
+                    BoxShadow(
+                        color: shadowColor,
+                        spreadRadius: 0,
+                        blurRadius: 32,
+                        offset: const Offset(0, 0)),
+                    BoxShadow(
+                        color: shadowColor,
+                        spreadRadius: 0,
+                        blurRadius: 10,
+                        offset: const Offset(0, 0))
+                  ],
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Badge(
+                  isLabelVisible: widget.isHighlight,
+                  offset: const Offset(0, -5),
+                  backgroundColor: shadowColor,
+                  label: widget.isHighlight ? const Icon(Icons.star) : null,
                   child: IgnorePointer(
                     ignoring: isIgnore,
                     child: GestureDetector(
@@ -310,23 +309,21 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                           children: [
                             CustomButton(
                                 callback: () {
-                                  if (widget.isTodoTask) {
-                                    _completedTodoAnimation(
-                                        slideDirection: 'right',
-                                        callback: () =>
-                                            dataContext.completeToggle(
-                                                context: context,
-                                                datalist: DataList.todo,
-                                                index: widget.index));
-                                  } else {
-                                    _completedTodoAnimation(
-                                        slideDirection: 'left',
-                                        callback: () =>
-                                            dataContext.completeToggle(
-                                                context: context,
-                                                datalist: DataList.done,
-                                                index: widget.index));
-                                  }
+                                  DatabaseName dataList = widget.isTodoTask
+                                      ? DatabaseName.todo
+                                      : DatabaseName.done;
+                                  SlideDirection slideDirection =
+                                      widget.isTodoTask
+                                          ? SlideDirection.right
+                                          : SlideDirection.left;
+
+                                  _completedTodoAnimation(
+                                      slideDirection: slideDirection,
+                                      callback: () =>
+                                          dataContext.completeToggle(
+                                              context: context,
+                                              datalist: dataList,
+                                              index: widget.index));
                                 },
                                 iconData: firstIcon),
                             CustomButton(
@@ -336,7 +333,8 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                                   } else {
                                     startDeleteAnimation(
                                         callback: () => dataContext.removeItem(
-                                            datalist: DataList.done,
+                                            datalist: DatabaseName.done,
+                                            context: context,
                                             index: widget.index));
                                   }
                                 },

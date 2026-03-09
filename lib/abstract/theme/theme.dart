@@ -10,11 +10,10 @@ ThemeData darkTheme(BuildContext context) {
           borderRadius: BorderRadius.all(Radius.circular(10))),
     )),
     canvasColor: Colors.white10,
-    shadowColor: HexColor('#1C92FF').withAlpha(125),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
         foregroundColor: Theme.of(context).secondaryHeaderColor,
         backgroundColor: HexColor('#00D1FF')),
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
         contentTextStyle: const TextStyle(color: Colors.white),
         backgroundColor: const Color.fromARGB(255, 39, 39, 39),
@@ -33,6 +32,6 @@ ThemeData darkTheme(BuildContext context) {
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: HexColor('#040934'),
         selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey.withOpacity(0.5)),
+        unselectedItemColor: Colors.grey.withAlpha(150)),
   );
 }
