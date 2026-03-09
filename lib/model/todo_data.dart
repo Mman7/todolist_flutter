@@ -6,8 +6,15 @@ class TodoData {
 
   factory TodoData.fromJson(Map<String, dynamic> json) {
     final dynamic rawHighlight = json['isHighlight'];
-    final bool isHighlight =
-        rawHighlight is String ? rawHighlight.toLowerCase() == 'true' : false;
+    final bool isHighlight;
+    
+    if (rawHighlight is bool) {
+      isHighlight = rawHighlight;
+    } else if (rawHighlight is String) {
+      isHighlight = rawHighlight.toLowerCase() == 'true';
+    } else {
+      isHighlight = false;
+    }
 
     return TodoData(
       isHighlight: isHighlight,
