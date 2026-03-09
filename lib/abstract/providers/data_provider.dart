@@ -23,10 +23,11 @@ class DataProvider with ChangeNotifier {
 
   Future<void> intializeData() async {
     prefs = await SharedPreferences.getInstance();
-    _todoTasks = _normalizeTaskList(
-        await Database.getData(dataBaseName: DatabaseName.todo));
-    _doneTasks = _normalizeTaskList(
-        await Database.getData(dataBaseName: DatabaseName.done));
+    final loadedTodo = await Database.getData(dataBaseName: DatabaseName.todo);
+    final loadedDone = await Database.getData(dataBaseName: DatabaseName.done);
+
+    _todoTasks = _normalizeTaskList(loadedTodo);
+    _doneTasks = _normalizeTaskList(loadedDone);
 
     // Persist normalized values to migrate older string-based data.
     await Database.saveData(
@@ -54,6 +55,7 @@ class DataProvider with ChangeNotifier {
     if (index == null) return;
     final bool value = _todoTasks[index].isHighlight;
     _todoTasks[index].isHighlight = !value;
+
     showSnackBarFromMessenger(
         messenger: ScaffoldMessenger.maybeOf(context),
         backgroundColor: Theme.of(context).primaryColor,
