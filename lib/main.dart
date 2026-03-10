@@ -72,6 +72,7 @@ class _TodoListState extends State<TodoList> {
     dataContext.intializeData();
   }
 
+  // Helper method to change the page when a bottom navigation item is tapped.
   changePage(int index) {
     setState(() {
       _selectedIndex = index;
@@ -79,6 +80,7 @@ class _TodoListState extends State<TodoList> {
     });
   }
 
+  // Helper method to open a dialog for adding a new task.
   openDialog(String _title, String _buttonText) {
     return showDialog(
         context: context,
@@ -109,6 +111,7 @@ class _TodoListState extends State<TodoList> {
             ));
   }
 
+  // Helper method to scroll to the bottom of the list when a new item is added.
   void _scrollDown() {
     scrollController.animateTo(
       scrollController.position.maxScrollExtent,
