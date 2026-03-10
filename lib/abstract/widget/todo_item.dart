@@ -11,8 +11,15 @@ import 'package:simple_todo/model/todo_data.dart';
 
 import '../providers/data_provider.dart';
 
+/// Direction used to slide the item when marking complete.
 enum SlideDirection { left, right }
 
+/// A single list item widget used in the todo app.
+///
+/// Responsibilities:
+/// - Display the task title and action buttons
+/// - Support editing, copying, deleting, and marking as complete
+/// - Run entry, completion and deletion animations
 class TodoItem extends StatefulWidget {
   const TodoItem(
       {Key? key,
@@ -23,10 +30,19 @@ class TodoItem extends StatefulWidget {
       required this.title})
       : super(key: key);
 
+  // Visual opacity for staggered/animated lists
   final double opacity;
+
+  // true = item is in the todo list; false = item is in the completed/done list
   final bool isTodoTask;
+
+  // index of this item in its list
   final int index;
+
+  // whether this item is highlighted/special
   final bool isHighlight;
+
+  // visible title text
   final String title;
 
   @override
@@ -34,21 +50,28 @@ class TodoItem extends StatefulWidget {
 }
 
 class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
+  // Provider that holds the app state and helper methods
   late DataProvider dataContext;
+
+  // Controller used for the inline edit TextField in the edit dialog
   late TextEditingController _textFieldController;
 
+  // Entry-slide animation controller and animation (vertical offset)
   late AnimationController slideController;
   late Animation<Offset> slideAnimation;
 
+  // Animation used when the item is being swiped/animated as completed
   late AnimationController _completedAniController;
   late Animation<Offset> _completedAnimation;
 
+  // Scale animation used to animate deletion (shrink to 0)
   late AnimationController _deleteAniController;
   late Animation<double> _deleteAnimation;
 
+  // When true, user interactions are ignored (prevents double actions)
   bool isIgnore = false;
 
-  /// This feature is to prevent users from deleting items too quickly resulting in deleting items twice.
+  /// Toggle `isIgnore` to temporarily block pointer events during animations.
   setIgnore({required bool value}) {
     setState(() {
       isIgnore = value;
@@ -61,6 +84,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
     _textFieldController = TextEditingController();
     dataContext = context.read<DataProvider>();
 
+    // Delete animation: shrink to zero over 250ms
     _deleteAniController = AnimationController(
       duration: const Duration(milliseconds: 250),
       vsync: this,
@@ -69,6 +93,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
     _deleteAnimation = Tween(begin: 1.0, end: 0.0).animate(
         CurvedAnimation(parent: _deleteAniController, curve: Curves.easeIn));
 
+    // Entry slide animation (used when the widget first appears)
     slideController = AnimationController(
       duration: const Duration(milliseconds: 350),
       vsync: this,
@@ -81,6 +106,8 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
       curve: Curves.fastEaseInToSlowEaseOut,
     ));
 
+    // Completed animation controller is initialized with zero duration
+    // and updated later when the user completes the task.
     _completedAniController = AnimationController(
       duration: const Duration(milliseconds: 0),
       vsync: this,
