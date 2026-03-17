@@ -7,9 +7,16 @@ class DataProvider with ChangeNotifier {
   List<TodoData> _todoTasks = [];
   List<TodoData> _doneTasks = [];
   Offset? buttonPos;
+  updatePos(Offset offset) => buttonPos = offset;
+
   SharedPreferences? prefs;
   List<TodoData> get todoTasks => _todoTasks;
   List<TodoData> get doneTasks => _doneTasks;
+  List<List<TodoData>> _historyData = [];
+
+  _updateHistory() {
+    _historyData = [_cloneTaskList(_todoTasks), _cloneTaskList(_doneTasks)];
+  }
 
   // Keep in-memory task rows normalized as TodoData objects.
   List<TodoData> _normalizeTaskList(List<TodoData> tasks) {
@@ -37,83 +44,92 @@ class DataProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  updatePos(Offset offset) => buttonPos = offset;
-
   Future<void> addTask({required BuildContext context, required value}) async {
+    _updateHistory();
     _todoTasks.add(TodoData(isHighlight: false, title: value.toString()));
     await Database.saveData(
         databaseName: DatabaseName.todo, newList: _todoTasks);
     showSnackBarFromMessenger(
         messenger: ScaffoldMessenger.maybeOf(context),
-        backgroundColor: Theme.of(context).primaryColor,
         message: 'Successfully Added');
+
     notifyListeners();
   }
 
   Future<void> setAsSpecial(
-      {required int? index, required BuildContext context}) async {
-    if (index == null) return;
+      {required int index, required BuildContext context}) async {
+    _updateHistory();
+
     final bool value = _todoTasks[index].isHighlight;
     _todoTasks[index].isHighlight = !value;
 
     showSnackBarFromMessenger(
         messenger: ScaffoldMessenger.maybeOf(context),
-        backgroundColor: Theme.of(context).primaryColor,
         message: 'Successfully Highlighted');
     await Database.saveData(
         databaseName: DatabaseName.todo, newList: _todoTasks);
+
     notifyListeners();
   }
 
   void showSnackBarFromMessenger({
     required ScaffoldMessengerState? messenger,
-    required Color backgroundColor,
     required String message,
   }) {
     if (messenger == null) return;
+    // Clear any existing snack bars before showing a new one.
+    messenger.hideCurrentSnackBar();
+    messenger.removeCurrentSnackBar();
+
     messenger.showSnackBar(SnackBar(
-      backgroundColor: backgroundColor,
-      duration: const Duration(milliseconds: 800),
-      content: Text(
-        message,
-        style: const TextStyle(color: Colors.white),
-      ),
-    ));
+        backgroundColor: Theme.of(messenger.context).primaryColor,
+        duration: const Duration(milliseconds: 1500),
+        persist: false,
+        action: SnackBarAction(
+            label: 'Undo',
+            textColor: Colors.white,
+            onPressed: () => restorePrevState()),
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        )));
+  }
+
+  static void _swapItem(
+      {required List todoList, required List doneList, required int index}) {
+    // Copy the item from the source list
+    final item = todoList[index];
+    // remove it from the first list and add it to the second list
+    todoList.removeAt(index);
+    doneList.add(item);
   }
 
   Future<void> completeToggle({
     required DatabaseName datalist,
     required int index,
-    required BuildContext context,
+    required ScaffoldMessengerState context,
   }) async {
-    final ScaffoldMessengerState? messenger =
-        ScaffoldMessenger.maybeOf(context);
-    final Color snackBarColor = Theme.of(context).primaryColor;
-    TodoData movedItem;
+    // Update history before making changes for undo functionality.
+    _updateHistory();
+
     if (datalist == DatabaseName.todo) {
-      movedItem = _todoTasks.removeAt(index);
-      _doneTasks.add(movedItem);
+      _swapItem(todoList: _todoTasks, doneList: _doneTasks, index: index);
       notifyListeners();
       showSnackBarFromMessenger(
-          messenger: messenger,
-          backgroundColor: snackBarColor,
-          message: 'Successfully completed task');
+          messenger: context, message: 'Successfully completed task');
       try {
-        await Database.completeToggle(dataList: datalist, index: index);
+        await Database.saveAll(_todoTasks, _doneTasks);
       } catch (_) {
         // Restore from storage if persistence fails.
         await intializeData();
       }
     } else {
-      movedItem = _doneTasks.removeAt(index);
-      _todoTasks.add(movedItem);
+      _swapItem(todoList: _doneTasks, doneList: _todoTasks, index: index);
       notifyListeners();
       showSnackBarFromMessenger(
-          messenger: messenger,
-          backgroundColor: snackBarColor,
-          message: 'Successfully undo donetask');
+          messenger: context, message: 'Successfully undo donetask');
       try {
-        await Database.completeToggle(dataList: datalist, index: index);
+        await Database.saveAll(_todoTasks, _doneTasks);
       } catch (_) {
         // Restore from storage if persistence fails.
         await intializeData();
@@ -124,10 +140,8 @@ class DataProvider with ChangeNotifier {
   Future<void> removeItem(
       {required DatabaseName datalist,
       required int index,
-      required context}) async {
-    final ScaffoldMessengerState? messenger =
-        ScaffoldMessenger.maybeOf(context);
-    final Color snackBarColor = Theme.of(context).primaryColor;
+      required ScaffoldMessengerState context}) async {
+    _updateHistory();
     final List<TodoData> targetList =
         datalist == DatabaseName.todo ? _todoTasks : _doneTasks;
     final TodoData removedItem = targetList.removeAt(index);
@@ -135,9 +149,7 @@ class DataProvider with ChangeNotifier {
     try {
       await Database.removeData(databaseName: datalist, index: index);
       showSnackBarFromMessenger(
-          messenger: messenger,
-          backgroundColor: snackBarColor,
-          message: 'Successfully Deleted');
+          messenger: context, message: 'Successfully Deleted');
     } catch (_) {
       targetList.insert(index, removedItem);
       notifyListeners();
@@ -146,6 +158,7 @@ class DataProvider with ChangeNotifier {
   }
 
   void cleanDoneTask() {
+    _updateHistory();
     _doneTasks = [];
     Database.cleanDoneTask();
     notifyListeners();
@@ -158,10 +171,33 @@ class DataProvider with ChangeNotifier {
     if (newIndex > oldIndex) {
       newIndex -= 1;
     }
-    var temp = _todoTasks.removeAt(oldIndex);
+    TodoData temp = _todoTasks.removeAt(oldIndex);
     _todoTasks.insert(newIndex, temp);
     await Database.saveData(
         databaseName: DatabaseName.todo, newList: _todoTasks);
+  }
+
+  // Helper to create a deep copy of a task list for history snapshots.
+  List<TodoData> _cloneTaskList(List<TodoData> tasks) => tasks
+      .map((item) => TodoData(
+            isHighlight: item.isHighlight,
+            title: item.title,
+          ))
+      .toList();
+
+  // Store a snapshot of the current state for undo functionality.
+
+  //  Restore the most recent snapshot from history, if available.
+  Future<void> restorePrevState() async {
+    if (_historyData.isEmpty) return;
+
+    _todoTasks = _cloneTaskList(_historyData[0]);
+    _doneTasks = _cloneTaskList(_historyData[1]);
+    await Database.saveData(
+        databaseName: DatabaseName.todo, newList: _todoTasks);
+    await Database.saveData(
+        databaseName: DatabaseName.done, newList: _doneTasks);
+    notifyListeners();
   }
 
   updateValue() {

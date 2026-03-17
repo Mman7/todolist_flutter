@@ -184,7 +184,6 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
     dataContext.updateValue();
     dataContext.showSnackBarFromMessenger(
         messenger: ScaffoldMessenger.maybeOf(context),
-        backgroundColor: Theme.of(context).primaryColor,
         message: 'Successfully Edited');
   }
 
@@ -247,7 +246,6 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
             await Clipboard.setData(ClipboardData(text: itemTitle));
             dataContext.showSnackBarFromMessenger(
                 messenger: ScaffoldMessenger.maybeOf(context),
-                backgroundColor: Theme.of(context).primaryColor,
                 message: 'Task Copied');
           },
           child: const CustomPopUpInside(text: 'Copy ', iconData: Icons.copy),
@@ -258,7 +256,7 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                 callback: () => dataContext.removeItem(
                     datalist: DatabaseName.todo,
                     index: index,
-                    context: context));
+                    context: ScaffoldMessenger.maybeOf(context)!));
           },
           child:
               const CustomPopUpInside(text: 'Delete', iconData: Icons.delete),
@@ -354,12 +352,13 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                                       widget.isTodoTask
                                           ? SlideDirection.right
                                           : SlideDirection.left;
-
                                   _completedTodoAnimation(
                                       slideDirection: slideDirection,
                                       callback: () =>
                                           dataContext.completeToggle(
-                                              context: context,
+                                              context:
+                                                  ScaffoldMessenger.maybeOf(
+                                                      context)!,
                                               datalist: dataList,
                                               index: widget.index));
                                 },
@@ -372,7 +371,8 @@ class _TodoItemState extends State<TodoItem> with TickerProviderStateMixin {
                                     startDeleteAnimation(
                                         callback: () => dataContext.removeItem(
                                             datalist: DatabaseName.done,
-                                            context: context,
+                                            context: ScaffoldMessenger.maybeOf(
+                                                context)!,
                                             index: widget.index));
                                   }
                                 },

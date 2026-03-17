@@ -135,7 +135,6 @@ class _TodoListState extends State<TodoList> {
                 dataContext.cleanDoneTask();
                 dataContext.showSnackBarFromMessenger(
                     messenger: ScaffoldMessenger.maybeOf(context),
-                    backgroundColor: Theme.of(context).primaryColor,
                     message: 'Successfully Clean Done Task');
               }),
         ],
