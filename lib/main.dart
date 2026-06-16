@@ -73,15 +73,21 @@ class _TodoListState extends State<TodoList> {
   }
 
   // Helper method to change the page when a bottom navigation item is tapped.
-  changePage(int index) {
-    setState(() {
-      _selectedIndex = index;
-      _controller.jumpToPage(index);
-    });
+  void changePage(int index) {
+    if (_selectedIndex == index) {
+      // 💥 The user tapped the tab they are ALREADY viewing
+      _scrollDown();
+    } else {
+      // Normal page switching
+      setState(() {
+        _selectedIndex = index;
+        _controller.jumpToPage(index);
+      });
+    }
   }
 
   // Helper method to open a dialog for adding a new task.
-  openDialog(String _title, String _buttonText) {
+  Future<String?> openDialog(String _title, String _buttonText) {
     return showDialog(
         context: context,
         builder: (context) => BackdropFilter(
@@ -182,8 +188,8 @@ class _TodoListState extends State<TodoList> {
         children: [
           ReorderableListView.builder(
               scrollController: scrollController,
-              onReorder: (oldIndex, newIndex) async => dataContext.reOrderItem(
-                  oldIndex: oldIndex, newIndex: newIndex),
+              onReorderItem: (oldIndex, newIndex) async => dataContext
+                  .reOrderItem(oldIndex: oldIndex, newIndex: newIndex),
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               itemCount: _todoTask.length,
               itemBuilder: (context, index) {
@@ -195,7 +201,7 @@ class _TodoListState extends State<TodoList> {
                     isHighlight: _todoTask[index].isHighlight,
                     title: _todoTask[index].title);
               }),
-          const DoneTaskList(),
+          DoneTaskList(scrollController: scrollController),
         ],
       ),
     );

@@ -6,12 +6,15 @@ import 'package:simple_todo/model/todo_data.dart';
 import '../providers/data_provider.dart';
 
 class DoneTaskList extends StatelessWidget {
-  const DoneTaskList({Key? key}) : super(key: key);
+  final ScrollController? scrollController;
+
+  const DoneTaskList({Key? key, this.scrollController}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     List<TodoData> _doneTask = context.watch<DataProvider>().doneTasks;
     return ListView.builder(
+        controller: scrollController,
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
         itemCount: _doneTask.length,
         itemBuilder: (context, index) {
