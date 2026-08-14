@@ -10,7 +10,7 @@ import 'package:simple_todo/abstract/widget/done_task_list.dart';
 import 'package:simple_todo/model/todo_data.dart';
 import 'abstract/theme/theme.dart';
 import 'abstract/widget/custom_floating_button.dart';
-import 'abstract/widget/todo_item.dart';
+import 'abstract/widget/todo_item_view.dart';
 
 import 'package:provider/provider.dart';
 import 'abstract/providers/data_provider.dart';
@@ -128,7 +128,7 @@ class _TodoListState extends State<TodoList> {
 
   @override
   Widget build(BuildContext context) {
-    List<TodoData> _todoTask = context.watch<DataProvider>().todoTasks;
+    List<TodoItem> _todoTask = context.watch<DataProvider>().todoTasks;
     String appBarHeaderText = _selectedIndex == 0 ? "Todo List" : "Done List";
 
     return Scaffold(
@@ -193,13 +193,11 @@ class _TodoListState extends State<TodoList> {
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               itemCount: _todoTask.length,
               itemBuilder: (context, index) {
-                return TodoItem(
-                    isTodoTask: true,
-                    key: ValueKey(index),
-                    index: index,
-                    opacity: 1.0,
-                    isHighlight: _todoTask[index].isHighlight,
-                    title: _todoTask[index].title);
+                return TodoItemView(
+                  todoItem: _todoTask[index],
+                  key: ValueKey(index),
+                  index: index,
+                );
               }),
           DoneTaskList(scrollController: scrollController),
         ],

@@ -22,7 +22,7 @@ class Database {
 
   /// Load a list of `TodoData` from storage for the given `dataBaseName`.
   /// Returns an empty list when no data is present.
-  static Future<List<TodoData>> getData(
+  static Future<List<TodoItem>> getData(
       {required DatabaseName dataBaseName}) async {
     await intializeData();
     // if it doesn't get any data return empty list
@@ -30,9 +30,9 @@ class Database {
     final List<dynamic> parsed = json.decode(rawData);
 
     // Convert the dynamic list to a list of TodoData objects.
-    final List<TodoData> decoded = parsed
+    final List<TodoItem> decoded = parsed
         .whereType<Map>()
-        .map((item) => TodoData.fromJson(Map<String, dynamic>.from(item)))
+        .map((item) => TodoItem.fromJson(Map<String, dynamic>.from(item)))
         .toList();
 
     return decoded;
@@ -40,7 +40,7 @@ class Database {
 
   /// Persist `newList` for the provided `databaseName`.
   static Future<void> saveData(
-      {required List<TodoData> newList,
+      {required List<TodoItem> newList,
       required DatabaseName databaseName}) async {
     await intializeData();
     final String data =
@@ -48,7 +48,7 @@ class Database {
     await prefs.setString(databaseName.toString(), data);
   }
 
-  static saveAll(List<TodoData> todoList, List<TodoData> doneList) async {
+  static saveAll(List<TodoItem> todoList, List<TodoItem> doneList) async {
     await saveData(newList: todoList, databaseName: DatabaseName.todo);
     await saveData(newList: doneList, databaseName: DatabaseName.done);
   }
@@ -56,7 +56,7 @@ class Database {
   /// Remove the item at [index] from the given database and save.
   static Future<void> removeData(
       {required DatabaseName databaseName, required int index}) async {
-    final List<TodoData> list = await getData(dataBaseName: databaseName);
+    final List<TodoItem> list = await getData(dataBaseName: databaseName);
     list.removeAt(index);
     await saveData(databaseName: databaseName, newList: list);
   }

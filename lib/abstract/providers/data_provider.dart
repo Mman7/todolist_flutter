@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_todo/abstract/localdatabase.dart';
+import 'package:simple_todo/model/localdatabase.dart';
 import 'package:simple_todo/model/todo_data.dart';
 
 class DataProvider with ChangeNotifier {
-  List<TodoData> _todoTasks = [];
-  List<TodoData> _doneTasks = [];
+  List<TodoItem> _todoTasks = [];
+  List<TodoItem> _doneTasks = [];
   Offset? buttonPos;
   updatePos(Offset offset) => buttonPos = offset;
 
   SharedPreferences? prefs;
-  List<TodoData> get todoTasks => _todoTasks;
-  List<TodoData> get doneTasks => _doneTasks;
-  List<List<TodoData>> _historyData = [];
+  List<TodoItem> get todoTasks => _todoTasks;
+  List<TodoItem> get doneTasks => _doneTasks;
+  List<List<TodoItem>> _historyData = [];
 
   _updateHistory() {
     _historyData = [_cloneTaskList(_todoTasks), _cloneTaskList(_doneTasks)];
   }
 
   // Keep in-memory task rows normalized as TodoData objects.
-  List<TodoData> _normalizeTaskList(List<TodoData> tasks) {
+  List<TodoItem> _normalizeTaskList(List<TodoItem> tasks) {
     return tasks
-        .map((item) => TodoData(
+        .map((item) => TodoItem(
               isHighlight: item.isHighlight,
               title: item.title.toString(),
+              dateTime: item.dateTime,
             ))
         .toList();
   }
@@ -46,13 +47,33 @@ class DataProvider with ChangeNotifier {
 
   Future<void> addTask({required BuildContext context, required value}) async {
     _updateHistory();
-    _todoTasks.add(TodoData(isHighlight: false, title: value.toString()));
+    _todoTasks.add(TodoItem(
+        isHighlight: false, title: value.toString(), dateTime: DateTime.now()));
     await Database.saveData(
         databaseName: DatabaseName.todo, newList: _todoTasks);
     showSnackBarFromMessenger(
         messenger: ScaffoldMessenger.maybeOf(context),
         message: 'Successfully Added');
 
+    notifyListeners();
+  }
+
+  Future<void> updateTask(
+      {required BuildContext context,
+      required int index,
+      required String value}) async {
+    // Update history before making changes for undo functionality.
+    _updateHistory();
+    // Update the title of the task at the specified index
+    _todoTasks[index].title = value;
+    // Update the dateTime to reflect the modification time
+    DateTime now = DateTime.now();
+    _todoTasks[index].dateTime = now;
+    await Database.saveData(
+        databaseName: DatabaseName.todo, newList: _todoTasks);
+    showSnackBarFromMessenger(
+        messenger: ScaffoldMessenger.maybeOf(context),
+        message: 'Successfully Updated');
     notifyListeners();
   }
 
@@ -105,14 +126,16 @@ class DataProvider with ChangeNotifier {
   }
 
   Future<void> completeToggle({
-    required DatabaseName datalist,
+    required TodoItem item,
     required int index,
     required ScaffoldMessengerState context,
   }) async {
     // Update history before making changes for undo functionality.
     _updateHistory();
 
-    if (datalist == DatabaseName.todo) {
+    if (!item.isCompleted) {
+      // update item to completed
+      item.isCompleted = true;
       _swapItem(todoList: _todoTasks, doneList: _doneTasks, index: index);
       notifyListeners();
       showSnackBarFromMessenger(
@@ -124,10 +147,12 @@ class DataProvider with ChangeNotifier {
         await intializeData();
       }
     } else {
+      // update item to not completed
+      item.isCompleted = false;
       _swapItem(todoList: _doneTasks, doneList: _todoTasks, index: index);
       notifyListeners();
       showSnackBarFromMessenger(
-          messenger: context, message: 'Successfully undo donetask');
+          messenger: context, message: 'Successfully undo completed task');
       try {
         await Database.saveAll(_todoTasks, _doneTasks);
       } catch (_) {
@@ -142,9 +167,9 @@ class DataProvider with ChangeNotifier {
       required int index,
       required ScaffoldMessengerState context}) async {
     _updateHistory();
-    final List<TodoData> targetList =
+    final List<TodoItem> targetList =
         datalist == DatabaseName.todo ? _todoTasks : _doneTasks;
-    final TodoData removedItem = targetList.removeAt(index);
+    final TodoItem removedItem = targetList.removeAt(index);
     notifyListeners();
     try {
       await Database.removeData(databaseName: datalist, index: index);
@@ -171,17 +196,18 @@ class DataProvider with ChangeNotifier {
     if (newIndex > oldIndex) {
       newIndex -= 1;
     }
-    TodoData temp = _todoTasks.removeAt(oldIndex);
+    TodoItem temp = _todoTasks.removeAt(oldIndex);
     _todoTasks.insert(newIndex, temp);
     await Database.saveData(
         databaseName: DatabaseName.todo, newList: _todoTasks);
   }
 
   // Helper to create a deep copy of a task list for history snapshots.
-  List<TodoData> _cloneTaskList(List<TodoData> tasks) => tasks
-      .map((item) => TodoData(
+  List<TodoItem> _cloneTaskList(List<TodoItem> tasks) => tasks
+      .map((item) => TodoItem(
             isHighlight: item.isHighlight,
             title: item.title,
+            dateTime: item.dateTime,
           ))
       .toList();
 
