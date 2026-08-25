@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_todo/model/localdatabase.dart';
-import 'package:simple_todo/model/todo_data.dart';
+import 'package:simple_todo/model/todo_item.dart';
 
 class DataProvider with ChangeNotifier {
   List<TodoItem> _todoTasks = [];
@@ -25,6 +25,7 @@ class DataProvider with ChangeNotifier {
               isHighlight: item.isHighlight,
               title: item.title.toString(),
               dateTime: item.dateTime,
+              isCompleted: item.isCompleted,
             ))
         .toList();
   }
@@ -33,7 +34,6 @@ class DataProvider with ChangeNotifier {
     prefs = await SharedPreferences.getInstance();
     final loadedTodo = await Database.getData(dataBaseName: DatabaseName.todo);
     final loadedDone = await Database.getData(dataBaseName: DatabaseName.done);
-
     _todoTasks = _normalizeTaskList(loadedTodo);
     _doneTasks = _normalizeTaskList(loadedDone);
 
@@ -48,7 +48,10 @@ class DataProvider with ChangeNotifier {
   Future<void> addTask({required BuildContext context, required value}) async {
     _updateHistory();
     _todoTasks.add(TodoItem(
-        isHighlight: false, title: value.toString(), dateTime: DateTime.now()));
+        isHighlight: false,
+        title: value.toString(),
+        dateTime: DateTime.now(),
+        isCompleted: false));
     await Database.saveData(
         databaseName: DatabaseName.todo, newList: _todoTasks);
     showSnackBarFromMessenger(
@@ -208,6 +211,7 @@ class DataProvider with ChangeNotifier {
             isHighlight: item.isHighlight,
             title: item.title,
             dateTime: item.dateTime,
+            isCompleted: item.isCompleted,
           ))
       .toList();
 

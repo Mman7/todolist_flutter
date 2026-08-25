@@ -13,18 +13,13 @@ class TodoItem {
       {required this.isHighlight,
       required this.title,
       required this.dateTime,
-      this.isCompleted = false});
+      required this.isCompleted});
 
-  /// Construct a `TodoData` from a decoded JSON map.
-  ///
-  /// The `isHighlight` field can be stored as a boolean or as a
-  /// string (e.g. "true"/"false"). This factory normalizes those
-  /// cases and falls back to `false` for unexpected values.
+  // Factory constructor to create a TodoItem from a JSON map.
   factory TodoItem.fromJson(Map<String, dynamic> json) {
     // Expect `isHighlight` to be a boolean; default to false otherwise.
     final dynamic rawHighlight = json['isHighlight'];
     final bool isHighlight = rawHighlight is bool ? rawHighlight : false;
-
     return TodoItem(
       isHighlight: isHighlight,
       title: (json['title'] ?? '').toString(),

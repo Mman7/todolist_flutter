@@ -7,14 +7,14 @@ import 'package:hexcolor/hexcolor.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:simple_todo/abstract/widget/delete_all_button.dart';
 import 'package:simple_todo/abstract/widget/done_task_list.dart';
-import 'package:simple_todo/model/todo_data.dart';
+import 'package:simple_todo/model/todo_item.dart';
 import 'abstract/theme/theme.dart';
 import 'abstract/widget/custom_floating_button.dart';
 import 'abstract/widget/todo_item_view.dart';
 
 import 'package:provider/provider.dart';
 import 'abstract/providers/data_provider.dart';
-//build command: flutter build apk --split-per-abi --no-shrink --no-sound-null-safety
+//build command: flutter build apk --split-per-abi --no-shrink
 
 void main() {
   /// Lock screen rotate

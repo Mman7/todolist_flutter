@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:simple_todo/model/todo_data.dart';
+import 'package:simple_todo/model/todo_item.dart';
 
 /// Names for the two persistent lists used by the app.
 /// Stored as string keys in `SharedPreferences`.
@@ -39,18 +39,22 @@ class Database {
   }
 
   /// Persist `newList` for the provided `databaseName`.
-  static Future<void> saveData(
+  static Future<String> saveData(
       {required List<TodoItem> newList,
       required DatabaseName databaseName}) async {
     await intializeData();
     final String data =
         json.encode(newList.map((item) => item.toJson()).toList());
     await prefs.setString(databaseName.toString(), data);
+    return data;
   }
 
   static saveAll(List<TodoItem> todoList, List<TodoItem> doneList) async {
-    await saveData(newList: todoList, databaseName: DatabaseName.todo);
-    await saveData(newList: doneList, databaseName: DatabaseName.done);
+    final todoData =
+        await saveData(newList: todoList, databaseName: DatabaseName.todo);
+    final doneData =
+        await saveData(newList: doneList, databaseName: DatabaseName.done);
+    print('Saved Done: $doneData');
   }
 
   /// Remove the item at [index] from the given database and save.

@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:provider/provider.dart';
 import 'package:simple_todo/model/localdatabase.dart';
-import 'package:simple_todo/model/todo_data.dart';
+import 'package:simple_todo/model/todo_item.dart';
 import 'package:simple_todo/abstract/widget/custom_button.dart';
 import 'package:simple_todo/abstract/widget/custom_pop_up_inside_layout.dart';
 import 'package:simple_todo/abstract/widget/todo_item_transition.dart';
@@ -156,14 +156,16 @@ class _TodoItemViewState extends State<TodoItemView>
     final Color shadowColor = widget.todoItem.isHighlight
         ? HexColor('#0057FF')
         : HexColor('#0057FF').withAlpha(0);
-    final bool isTodoTask = !widget.todoItem.isCompleted;
+    final bool isTodoTask = widget.todoItem.isCompleted
+        ? false
+        : true; // Determine if the task is in the todo list or done list
     final isOpcacity = widget.todoItem.isCompleted ? 0.5 : 1.0;
 
     final TextDecoration textStyle =
         isTodoTask ? TextDecoration.none : TextDecoration.lineThrough;
     final IconData firstIcon = isTodoTask ? Icons.done : Icons.keyboard_return;
     final IconData secondIcon = isTodoTask ? Icons.more_vert : Icons.delete;
-
+    // print(widget.todoItem.isCompleted);
     //
     return TodoItemTransition(
       key: _transitionKey,

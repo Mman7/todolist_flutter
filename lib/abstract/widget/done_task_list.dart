@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:simple_todo/abstract/widget/todo_item_view.dart';
 
 import 'package:provider/provider.dart';
-import 'package:simple_todo/model/todo_data.dart';
+import 'package:simple_todo/model/todo_item.dart';
 import '../providers/data_provider.dart';
 
 class DoneTaskList extends StatelessWidget {
